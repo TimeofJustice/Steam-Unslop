@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.8.0
+
+- "Continue to payment" in the cart first warns when the cart holds games with an AI
+  disclosure, listing each with its rating; the games of bundles in the cart are checked too.
+  Which games count follows the blur level and the exceptions. If the cart cannot be checked in
+  time, the payment goes ahead as usual.
+- Bundles are blurred when one of their games is: their overlay sums up the AI use, and
+  "Reason" lists the bundle's AI games with their ratings. Bundles cannot be ignored on Steam,
+  so they have no "Ignore" button.
+- The bundle dialog and the cart warning show the AI games one page each, strongest first, with
+  level, tags and the developer's statement; the arrows or the arrow keys turn the pages.
+- Low tiles such as the ones in the cart show their tags in one line: the strongest ones, and
+  "+N" for the rest, named in its tooltip.
+- Statements about human work with describing words, such as "made by our talented team of
+  artists", no longer count as AI use. Games already rated are rated again.
+
 ## 1.7.0
 
 - Game pages without an AI disclosure show "Report AI slop", which opens Steam's report dialog

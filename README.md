@@ -14,7 +14,8 @@ listing.
 ## What it does
 
 - **Blurs AI games everywhere in the store**: capsules, search results, list rows, the
-  wishlist, the search suggestions, hover popovers, screenshots and trailers.
+  wishlist, the search suggestions, hover popovers, screenshots and trailers. Bundles are blurred
+  when one of their games is.
 - **Rates the AI use** as Low, Medium or High and tags it: art, 3D models, video, voices,
   music, sound effects, story and text, marketing, translation, code, concepts, and live AI
   that generates content while you play.
@@ -27,6 +28,8 @@ listing.
   threshold stay visible; their game page only shows the rating below the title.
 - **Lets you act**: show a game anyway, or put it on Steam's ignore list. On your own wishlist,
   ignoring also removes the game from the wishlist, after a second click to confirm.
+- **Warns before paying** when the cart holds AI games, with their ratings; you can go back or
+  continue.
 - **Helps report undisclosed AI.** Game pages without a disclosure show "Report AI slop", which
   opens Steam's own report dialog. Steam has no report reason for AI, so you choose the reason
   and describe what you noticed.

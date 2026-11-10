@@ -240,3 +240,16 @@ test("AI assets replaced by the team lower the level, assets replaced by AI do n
     assert.equal(SteamUnslop.rate(analyze(text)).lowered, false, text);
   }
 });
+
+test("human work described with adjectives is no AI use", () => {
+  const info = analyze(
+    "We only used AI to translate the game into more languages.<br>Nothing else is AI.<br>" +
+      "All 3D models and animations are made by our talented team of real human artists.<br>" +
+      "All in-game music was made by real people and licensed via Artlist.io (Artlist Originals, no AI).",
+  );
+  assert.deepEqual(plain(info.tags), ["transl"]);
+  assert.equal(SteamUnslop.rate(info).level, 1);
+
+  const aiSystem = analyze("The voices were made by our AI voice system.");
+  assert.deepEqual(plain(aiSystem.tags), ["voice"], "an AI system is no human team");
+});

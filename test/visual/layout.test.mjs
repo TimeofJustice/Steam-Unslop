@@ -143,3 +143,34 @@ test("long German action labels stay inside the dialog padding", async () => {
   });
   assert.deepEqual(overflow, []);
 });
+
+test("tags that do not fit a low tile are summed up as +N, strongest first", async () => {
+  const lowTile = (id, appId) =>
+    `<a id="${id}" href="https://store.steampowered.com/app/${appId}/" style="display:block;width:200px;height:94px;margin:8px">` +
+    `<img style="width:200px;height:94px"></a>`;
+  const page = await storePage(lowTile("many", 111) + lowTile("one", 222), {
+    cache: { 111: entry(["model", "video", "transl"]), 222: entry(["transl"]) },
+    language: "de",
+  });
+  await page.waitForTimeout(300);
+
+  const tagsOf = id =>
+    page.evaluate(tileId => {
+      const tagList = document.querySelector(`#${tileId} .unslop-tags`);
+      const visible = [...tagList.children].filter(tag => !tag.hidden);
+      return {
+        texts: visible.map(tag => tag.textContent),
+        fits: tagList.scrollWidth <= tagList.clientWidth,
+        lines: new Set(visible.map(tag => Math.round(tag.getBoundingClientRect().top))).size,
+      };
+    }, id);
+
+  const many = await tagsOf("many");
+  assert.ok(many.fits, "nothing is cut off");
+  assert.equal(many.lines, 1);
+  assert.equal(many.texts[0], "3D-Modelle", "the strongest tag stays");
+  assert.match(many.texts.at(-1), /^\+\d$/);
+
+  const one = await tagsOf("one");
+  assert.deepEqual(one.texts, ["\u00dcbersetzung"], "a single tag that fits gets no +N");
+});

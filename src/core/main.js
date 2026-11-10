@@ -31,6 +31,14 @@ import { OLD_STAR_KEYS, STAR_KEY, countPageForStar, loadStarState } from "./star
 import { openTutorial } from "./tutorial.js";
 import { addPageBadge, blockGamePage } from "./dialog.js";
 import { addReportBanner } from "./report.js";
+import { preloadCartRatings, watchCheckout } from "./cart.js";
+import {
+  bundleIdOf,
+  bundleKeyOf,
+  cachedBundleEntry,
+  fetchBundleRating,
+  isBundleKey,
+} from "./bundles.js";
 import { dimRow } from "./wishlist.js";
 import { blurCard, unblurCard } from "./card.js";
 import {
@@ -49,6 +57,17 @@ import {
 import { decorateHovers, recentHover, trackHover } from "./hover.js";
 import { revealedAppIds, scanMedia } from "./media.js";
 import { ensureNavButton } from "./nav.js";
+
+// Tiles link to a game or to a bundle, which counts as AI when one of its games does.
+const TILE_LINK_SELECTOR = 'a[href*="/app/"], a[href*="/bundle/"]';
+
+function tileKeyOf(link) {
+  const bundleId = !appIdOf(link) && bundleIdOf(link);
+  return appIdOf(link) || (bundleId ? bundleKeyOf(bundleId) : undefined);
+}
+
+const cachedTileEntry = key => (isBundleKey(key) ? cachedBundleEntry(key) : cachedEntry(key));
+const fetchTileRating = key => (isBundleKey(key) ? fetchBundleRating(key) : fetchRating(key));
 
 // Store pages are only fetched once a tile comes this close to the viewport.
 export const SCAN_MARGIN = 800;
@@ -70,7 +89,7 @@ function checkTile(link) {
   tileVisibility.unobserve(link);
   waitingTiles.delete(link);
 
-  fetchRating(appId).then(info => {
+  fetchTileRating(appId).then(info => {
     // The element may have been reused for another game in the meantime.
     if (link.dataset.unslopId === appId) settleTile(link, info);
   });
@@ -140,7 +159,7 @@ const hasLostDimming = link =>
 
 // Repairs a known tile after the page re-rendered parts of it.
 function restoreTile(link, appId) {
-  const entry = cachedEntry(appId);
+  const entry = cachedTileEntry(appId);
 
   if (link.classList.contains("unslop-wait") && entry) {
     return settleTile(link, entry.ai ? entry : null);
@@ -171,7 +190,7 @@ function restoreTile(link, appId) {
 }
 
 function scanLink(link, pageAppId) {
-  const appId = appIdOf(link);
+  const appId = tileKeyOf(link);
   const isTile = () => link.dataset.unslopId === appId || hasCapsuleImage(link);
 
   if (!appId || appId === pageAppId || !isTile()) {
@@ -192,19 +211,20 @@ function scanLink(link, pageAppId) {
     return;
   }
 
-  const entry = cachedEntry(appId);
+  const entry = cachedTileEntry(appId);
   if (!entry) waitForRating(link);
   else if (entry.ai && shouldBlur(entry, appId)) blurTile(link, entry);
 }
 
 export function scan() {
   const pageAppId = currentAppId();
-  for (const link of document.querySelectorAll('a[href*="/app/"]')) scanLink(link, pageAppId);
+  for (const link of document.querySelectorAll(TILE_LINK_SELECTOR)) scanLink(link, pageAppId);
 
   checkWaitingTiles();
   scanMedia();
   ensureNavButton();
   countPageForStar();
+  preloadCartRatings();
 
   const hoverIsActive =
     recentHover() || document.querySelector('[data-unslop-hover], [id^="hover_app_"]');
@@ -258,7 +278,7 @@ function handleMutation(record) {
 
   // A reused element links to another game now: drop the old state before the next paint.
   const knownAppId = record.target.dataset?.unslopId;
-  if (record.type === "attributes" && knownAppId && appIdOf(record.target) !== knownAppId) {
+  if (record.type === "attributes" && knownAppId && tileKeyOf(record.target) !== knownAppId) {
     unblurTile(record.target);
     delete record.target.dataset.unslopId;
   }
@@ -352,6 +372,7 @@ export async function start(adapter) {
   setLanguage(steamLanguage());
   hold();
   document.addEventListener("mouseover", trackHover, true);
+  watchCheckout();
 
   // The session cache is synchronous, so known games are blurred right away.
   setCache(loadSessionCache());
