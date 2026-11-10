@@ -14,6 +14,7 @@ import {
   starBannerHTML,
 } from "./star.js";
 import { modalHeaderHTML, nextModalId, openModal } from "./modal.js";
+import { fillGameList, gameListHTML, sortByLevel } from "./game-list.js";
 
 export const closeAction = () => ({
   label: texts.close,
@@ -36,6 +37,16 @@ function actionButtonsHTML(actions, allowId) {
   return allowButton + actionButtons;
 }
 
+// Games show the developer's statement, bundles the list of their AI games.
+function statementHTML(info) {
+  if (info.bundle) {
+    const gameList = gameListHTML(sortByLevel(info.games));
+    return `<section class="unslop-quote"><div class="unslop-label">${texts.bundleGames}</div>${gameList}</section>`;
+  }
+
+  return `<section class="unslop-quote"><div class="unslop-label">${texts.devStatement}</div><blockquote></blockquote></section>`;
+}
+
 function reasonDialogHTML(info, rating, { titleId, intro, actions, dismissable, allowId }) {
   const tagList = tagsHTML(info.tags) || `<em class="sev-0">${texts.noDetails}</em>`;
   const legend =
@@ -50,7 +61,7 @@ function reasonDialogHTML(info, rating, { titleId, intro, actions, dismissable, 
       ${levelHTML(rating)}
       <div class="unslop-tags">${tagList}</div>
       ${uncertaintyNoteHTML(rating)}
-      <section class="unslop-quote"><div class="unslop-label">${texts.devStatement}</div><blockquote></blockquote></section>
+      ${statementHTML(info)}
       <div class="unslop-legend"><span class="unslop-label">${texts.legend}</span>${legend}</div>
       <div class="unslop-actions">${actionButtonsHTML(actions, allowId)}</div>
     </div>${starBannerHTML()}</div>`;
@@ -98,6 +109,11 @@ export function openReasonDialog(
 
   if (shownSubtitle) subtitleElement.textContent = shownSubtitle;
   else if (!needsName) subtitleElement.remove();
+
+  if (info.bundle) {
+    fillGameList(modal, sortByLevel(info.games));
+    return close;
+  }
 
   // info is often the cache entry itself, which loadDetails() fills, so decide up front.
   const quote = modal.querySelector("blockquote");

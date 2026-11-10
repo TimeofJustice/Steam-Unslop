@@ -333,6 +333,40 @@ export function arrangeOverlays(mainLink, onlyIfChanged) {
   if (layout.strip) addOverlay(layout.strip, mainLink, "actions");
 }
 
+/* Tags in one line (low tiles, flat rows) that do not fit: the last ones are hidden and "+N"
+   stands in for them, with their names as tooltip. At least one tag stays. */
+function fitTags(tagList) {
+  tagList.querySelector(".unslop-more")?.remove();
+  const tags = [...tagList.children];
+  tags.forEach(tag => (tag.hidden = false));
+
+  const fits = () => tagList.scrollWidth <= tagList.clientWidth;
+  if (getComputedStyle(tagList).flexWrap !== "nowrap" || fits()) return;
+
+  const more = document.createElement("em");
+  more.className = "unslop-more sev-0";
+  tagList.append(more);
+
+  for (let hiddenCount = 1; hiddenCount < tags.length; hiddenCount++) {
+    const hiddenTags = tags.slice(-hiddenCount);
+    tags.forEach(tag => (tag.hidden = hiddenTags.includes(tag)));
+
+    more.textContent = `+${hiddenCount}`;
+    more.title = hiddenTags.map(tag => tag.textContent).join(", ");
+    if (fits()) return;
+  }
+}
+
+// Tiles change size with the page layout, so the tags are fitted again on every resize.
+const tagFitter =
+  typeof ResizeObserver === "function"
+    ? new ResizeObserver(entries => {
+        for (const entry of entries) entry.target.querySelectorAll(".unslop-tags").forEach(fitTags);
+      })
+    : null;
+
+export const fitTagsOnResize = element => tagFitter?.observe(element);
+
 const ignoredHTML = () => `<span class="unslop-ignored">${texts.ignored}</span>`;
 
 export function actionButtonsHTML(info, withIgnore = true) {
@@ -340,7 +374,7 @@ export function actionButtonsHTML(info, withIgnore = true) {
   const showButton = `<button class="unslop-btn unslop-btn-primary" data-tile-action="show" title="${texts.showAnyway}">${texts.showShort}</button>`;
 
   let ignoreButton = "";
-  if (withIgnore) {
+  if (withIgnore && !info.bundle) {
     ignoreButton = info.ignored
       ? ignoredHTML()
       : `<button class="unslop-btn unslop-btn-secondary unslop-btn-ignore" data-tile-action="ignore">${texts.ignore}</button>`;
@@ -397,6 +431,7 @@ function addOverlay(target, mainLink, mode) {
   );
 
   overlayHostOf(target).appendChild(overlay);
+  fitTagsOnResize(overlay);
 }
 
 export function unblurTileGroup(mainLink) {
@@ -446,6 +481,16 @@ function openTileReason(mainLink) {
       revealTileGroup(mainLink);
     },
   };
+
+  if (info.bundle) {
+    openReasonDialog(info, {
+      title: texts.disclosure,
+      dismissable: true,
+      intro: texts.bundleIntro,
+      actions: [closeAction(), showAction],
+    });
+    return;
+  }
 
   openReasonDialog(info, {
     title: texts.disclosure,

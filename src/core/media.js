@@ -8,7 +8,13 @@ import { AVATAR_SELECTOR, MEDIA_SELECTOR, currentAppId, toggleClass } from "./do
 import { cachedEntry, fetchRating } from "./cache.js";
 import { handleIgnoreClick } from "./steam-api.js";
 import { closeAction, openReasonDialog } from "./dialog.js";
-import { actionButtonsHTML, ratingInfoHTML, revealTileGroup, tileAreaOf } from "./tiles.js";
+import {
+  actionButtonsHTML,
+  fitTagsOnResize,
+  ratingInfoHTML,
+  revealTileGroup,
+  tileAreaOf,
+} from "./tiles.js";
 import { SCAN_MARGIN, requestScan } from "./main.js";
 
 /* Screenshots and trailers outside of game links, e.g. the large preview of the discovery queue.
@@ -212,6 +218,7 @@ function createMediaInfoBox(appId, host) {
   }
 
   host.appendChild(infoBox);
+  fitTagsOnResize(infoBox);
   return infoBox;
 }
 

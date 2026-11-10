@@ -160,6 +160,18 @@ html[data-unslop-hold-page] body {
     display: none;
   }
 }
+/* Low tiles (e.g. in the cart): tags in one line. What does not fit is summed up as "+N" by
+   fitTags() in tiles.js; the tags are sorted, so the strongest stay. */
+@container (max-height: 140px) {
+  .unslop-box .unslop-tags {
+    flex-wrap: nowrap;
+    justify-content: safe center;
+    overflow: hidden;
+  }
+  .unslop-box .unslop-tags em {
+    flex: none;
+  }
+}
 @container (max-width: 150px) {
   .unslop-box .unslop-btn[data-tile-action="why"],
   .unslop-box .unslop-meter {
@@ -350,6 +362,9 @@ html[data-unslop-hold-page] body {
   justify-content: center;
   gap: 3px;
   max-width: 100%;
+}
+.unslop-tags em[hidden] {
+  display: none;
 }
 .unslop-tags em,
 .unslop-legend em {
@@ -880,6 +895,84 @@ html[data-unslop-page] body > *:not(.unslop-modal) {
 .unslop-search:focus {
   outline: none;
   border-color: var(--u-low);
+}
+
+/* ---------- Warning before paying for a cart with AI games ---------- */
+.unslop-cart-warning {
+  max-width: 520px;
+}
+/* AI games of a bundle or cart, one page per game. */
+.unslop-game-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.unslop-game-page {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--u-shade);
+  border-radius: 2px;
+}
+/* Name above the rating on every page, so pages look the same whatever the name's length. */
+.unslop-game-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.unslop-game-name {
+  color: var(--u-white);
+  font-weight: 500;
+}
+.unslop-game-rating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.unslop-game-rating .unslop-tags {
+  justify-content: flex-start;
+}
+/* Three lines at least, so short statements do not make the buttons jump when turning pages. */
+.unslop-dialog .unslop-game-page blockquote {
+  margin: 0;
+  min-height: 4.5em;
+}
+.unslop-game-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--u-muted);
+  font-size: 12px;
+}
+.unslop-game-nav[hidden] {
+  display: none;
+}
+.unslop-game-count {
+  min-width: 90px;
+  text-align: center;
+}
+/* Chevrons drawn with borders, so no icon font is needed. */
+.unslop-page-prev::before,
+.unslop-page-next::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+}
+.unslop-page-prev::before {
+  transform: translateX(2px) rotate(135deg);
+}
+.unslop-page-next::before {
+  transform: translateX(-2px) rotate(-45deg);
+}
+.unslop-game-nav .unslop-icon-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
 }
 
 /* ---------- Finding the level with examples ---------- */

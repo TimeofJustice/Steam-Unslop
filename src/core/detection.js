@@ -450,6 +450,8 @@ const AI_WORD = wholeWords([
 const HUMAN_MADE = wholeWords([
   "(?:created|made|written|composed|drawn|painted|produced|performed|recorded|voiced|designed|done|authored|developed|crafted|directed)" +
     "(?: or \\w+)? (?:entirely |solely |directly |manually |fully |completely )?by (?:a |an |the |our |my |its )?(?:own )?" +
+    // Up to two describing words, as in "our talented team".
+    "(?:(?!ai\\b|ki\\b)[\\w-]+ ){0,2}?" +
     "(?:real |professional |human |internal |in-house )?(?:humans?|human \\w+|hands?|people|persons?|developers?|devs?|team|" +
     "creators?|artists?|musicians?|composers?|writers?|illustrators?|me|myself|us|ourselves)",
   "(?:created|made|written|drawn|done|developed|designed) (?:entirely |fully )?(?:manually|by hand|in-house)",
