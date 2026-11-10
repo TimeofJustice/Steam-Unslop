@@ -13,7 +13,15 @@ export const plain = x => JSON.parse(JSON.stringify(x));
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
 export const disclosure = text =>
   `<h2>AI Generated Content Disclosure</h2><p>${text}</p><h2>System Requirements</h2>`;
-export const entry = (tags, extra = {}) => ({ ai: true, tags, text: "x", t: Date.now(), ...extra });
+// v: ENTRY_VERSION in src/core/cache.js, so the entries count as rated by the current detection.
+export const entry = (tags, extra = {}) => ({
+  ai: true,
+  tags,
+  text: "x",
+  t: Date.now(),
+  v: 3,
+  ...extra,
+});
 export const hover = (w, sel) =>
   w.document.querySelector(sel).dispatchEvent(new w.MouseEvent("mouseover", { bubbles: true }));
 

@@ -4,7 +4,7 @@
 [plugin]
 id = "steam-unslop"
 name = "Steam Unslop"
-version = "1.6.0"
+version = "1.6.1"
 author = "TimeofJustice"
 description = "Blurs games with an AI disclosure in the Steam store and shows how strongly and for what AI was used."
 

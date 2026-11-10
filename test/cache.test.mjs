@@ -72,8 +72,9 @@ test("entries of the legacy cache key are taken over and the old key is removed"
   storage.remove = keys => removed.push(...keys);
   const w = page({ html: tile });
   await w.SteamUnslop.start(storage);
-  await sleep(50);
-  assert.ok(blurred(w), "known from the legacy cache, no store request needed");
+  // The entry predates the current detection; the store page cannot be fetched again here.
+  await sleep(800);
+  assert.ok(blurred(w), "the legacy rating still counts when the page cannot be fetched");
   assert.deepEqual(
     plain(storage.data[CACHE_KEY]["111"].hints),
     [],
@@ -98,7 +99,7 @@ test("results and rate limits from other tabs are taken over without fetching", 
   // Another tab hit the rate limit and then found the game.
   w.SteamUnslop.applyStored("unslopPause", Date.now() + 60000);
   w.SteamUnslop.applyStored(CACHE_KEY, {
-    111: { ai: true, tags: ["voice"], text: "AI voices.", name: "G", t: Date.now(), v: 2 },
+    111: { ai: true, tags: ["voice"], text: "AI voices.", name: "G", t: Date.now(), v: 3 },
   });
   await sleep(100);
   assert.ok(blurred(w), "blurred from the other tab's result");
@@ -123,4 +124,27 @@ test("a stored entry without its text keeps the lowered level of its hints", asy
   const w2 = page({ html: tile });
   await w2.SteamUnslop.start(memoryStorage(storage.data));
   assert.equal(w2.document.querySelector("#t .unslop-level b").textContent, "Low");
+});
+
+test("AI entries of an older detection are rated again and stay ignored", async () => {
+  const outdated = { ai: true, tags: ["text", "transl"], hints: [], t: Date.now(), v: 2 };
+  const storage = memoryStorage({ [CACHE_KEY]: { 111: { ...outdated, ignored: true } } });
+  const translationPage = `<html><body><div id="appHubAppName">Elven Game</div>${disclosure("Text translation.")}</body></html>`;
+
+  let calls = 0;
+  const fetch = async () => {
+    calls++;
+    return { ok: true, status: 200, text: async () => translationPage };
+  };
+
+  const w = page({ html: tile, fetch });
+  await w.SteamUnslop.start(storage);
+  await sleep(1300);
+
+  assert.equal(calls, 1);
+  const entry = storage.data[CACHE_KEY]["111"];
+  assert.deepEqual(plain(entry.tags), ["transl"]);
+  assert.equal(entry.v, 3);
+  assert.equal(entry.ignored, true);
+  assert.equal(entry.name, "Elven Game");
 });

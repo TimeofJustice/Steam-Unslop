@@ -47,12 +47,10 @@ const pendingRatings = new Map();
 
 const storePageUrl = appId => `https://store.steampowered.com/app/${appId}/`;
 
-/* Version 2: detection in every store language. Before, only English and German pages were
-   read, so older "no AI" entries from other store languages are not trusted. */
-const ENTRY_VERSION = 2;
-const storeReadsEveryLanguage = /^(?:en|de)?$/i.test(
-  (document.documentElement?.lang || "").slice(0, 2),
-);
+/* Raise it whenever the detection changes: entries rated by an older detection are fetched
+   again, so improvements reach games that are already cached.
+   2: every store language. 3: since 1.6.1, older entries may carry ratings of earlier builds. */
+export const ENTRY_VERSION = 3;
 
 const hintKeysOf = info => findHints(info.text, info.tags).map(hint => hint.key);
 
@@ -83,12 +81,17 @@ function storedFormOf(entry) {
   };
 }
 
-const isTrusted = entry => entry.ai || entry.v >= ENTRY_VERSION || storeReadsEveryLanguage;
+const isFresh = entry => !!entry && Date.now() - entry.t < ENTRY_LIFETIME;
 
 export function cachedEntry(appId) {
   const entry = cache[appId];
-  const isFresh = entry && Date.now() - entry.t < ENTRY_LIFETIME;
-  return isFresh && isTrusted(entry) ? entry : undefined;
+  return isFresh(entry) && entry.v >= ENTRY_VERSION ? entry : undefined;
+}
+
+// When the store page cannot be fetched again, an AI entry of an older detection still counts.
+function outdatedAiEntry(appId) {
+  const entry = cache[appId];
+  return isFresh(entry) && entry.ai ? entry : null;
 }
 
 // Mature games show an age check instead of the page until the user passed it once.
@@ -239,8 +242,13 @@ function runRequest(request) {
       return response.text();
     })
     .then(html => {
+      const previousEntry = cache[request.appId];
       const entry = (cache[request.appId] = toEntry(analyze(html)));
-      if (entry.ai) entry.name = gameNameFromPage(html);
+
+      if (entry.ai) {
+        entry.name = gameNameFromPage(html) || previousEntry?.name || "";
+        if (previousEntry?.ignored) entry.ignored = true;
+      }
 
       saveCache();
       request.resolve(entry.ai ? entry : null);
@@ -259,13 +267,13 @@ function handleFailedRequest(request, failure) {
   // Not cached: the answer stays unknown until the age check was passed.
   if (failure === "agecheck") {
     request.tries = MAX_TRIES + 1;
-    request.resolve(null);
+    request.resolve(outdatedAiEntry(request.appId));
     return;
   }
 
   request.tries++;
   if (request.tries > MAX_TRIES) {
-    request.resolve(null);
+    request.resolve(outdatedAiEntry(request.appId));
     return;
   }
 

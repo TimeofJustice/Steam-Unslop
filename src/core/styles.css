@@ -486,7 +486,7 @@ html[data-unslop-page] body > *:not(.unslop-modal) {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 560px;
+  max-width: 600px;
   max-height: calc(100vh - 32px);
   overflow: hidden;
   color: var(--u-text);
@@ -678,8 +678,10 @@ html[data-unslop-page] body > *:not(.unslop-modal) {
 .unslop-choice .unslop-meter {
   flex: none;
 }
+/* Wraps instead of overflowing when long labels (e.g. German) do not fit in one row. */
 .unslop-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
   margin-top: 6px;

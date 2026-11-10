@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1
+
+- Games already in the cache are rated again when the detection has changed, instead of keeping
+  an outdated rating for up to a week. If the store page cannot be loaded, the old rating still
+  applies; ignored games stay ignored.
+- The buttons of the reason dialog no longer run past its edge with long labels, e.g. in German.
+
 ## 1.6.0
 
 First release.

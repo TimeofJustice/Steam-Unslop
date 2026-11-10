@@ -120,3 +120,26 @@ test("the quiz summary lines up levels, texts and states in columns", async () =
   );
   assert.ok(states.every(a => a === "center"));
 });
+
+test("long German action labels stay inside the dialog padding", async () => {
+  const page = await storePage(
+    `<a id="t" href="https://store.steampowered.com/app/111/" style="display:block;width:300px;height:140px">
+    <img style="width:300px;height:140px"></a>`,
+    { cache: { 111: entry(["text", "transl"]) }, language: "de" },
+  );
+  await page.click('#t [data-tile-action="why"]');
+
+  const overflow = await page.evaluate(() => {
+    const body = document.querySelector(".unslop-dialog-body");
+    const style = getComputedStyle(body);
+    const bounds = body.getBoundingClientRect();
+    const contentLeft = bounds.left + parseFloat(style.paddingLeft);
+    const contentRight = bounds.right - parseFloat(style.paddingRight);
+
+    return [...body.querySelectorAll(".unslop-actions .unslop-btn")]
+      .map(button => button.getBoundingClientRect())
+      .filter(button => button.left < contentLeft - 0.5 || button.right > contentRight + 0.5)
+      .map(button => `${Math.round(button.left)}-${Math.round(button.right)}`);
+  });
+  assert.deepEqual(overflow, []);
+});

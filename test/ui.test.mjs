@@ -247,7 +247,10 @@ test("discovery carousel: screenshots and trailer of the AI game are blurred and
       <img id="av" data-r="0,700,240,135" src="https://avatars.fastly.steamstatic.com/steam/apps/111/x.jpg">
     </div>`,
   });
-  await start(w, { 111: entry(["art"], { name: "AI Game" }), 222: { ai: false, t: Date.now() } });
+  await start(w, {
+    111: entry(["art"], { name: "AI Game" }),
+    222: { ai: false, t: Date.now(), v: 3 },
+  });
   const d = w.document;
   const cls = (s, c) => d.querySelector(s).classList.contains(c);
   assert.ok(cls("#th1", "unslop-blur"), "thumbnail");
@@ -353,7 +356,7 @@ test("search suggestion rows with display: contents get the overlay on their own
       <a id="other" data-r="0,270,350,60" href="https://store.steampowered.com/app/222/"><img src="b.jpg"></a>
     </div>`,
   });
-  await start(w, { 111: entry(["transl"]), 222: { ai: false, t: Date.now() } });
+  await start(w, { 111: entry(["transl"]), 222: { ai: false, t: Date.now(), v: 3 } });
   const d = w.document;
   assert.ok(d.querySelector("#row").classList.contains("unslop-blur"));
   assert.ok(
@@ -483,7 +486,7 @@ test("the same game listed twice in a result list gets two full overlays", async
   const row = (n, id) =>
     `<a id="r${n}" class="search_result_row" data-r="0,${n * 50},900,45" href="https://store.steampowered.com/app/${id}/"><img src="${id}.jpg"></a>`;
   const w = page({ html: `<div id="rows">${row(1, 111)}${row(2, 222)}${row(3, 111)}</div>` });
-  await start(w, { 111: entry(["art"]), 222: { ai: false, t: Date.now() } });
+  await start(w, { 111: entry(["art"]), 222: { ai: false, t: Date.now(), v: 3 } });
   assert.equal(overlayMode(w, "#r1"), "full");
   assert.equal(overlayMode(w, "#r3"), "full");
 });

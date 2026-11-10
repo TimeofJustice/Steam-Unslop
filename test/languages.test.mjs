@@ -71,7 +71,7 @@ test("an age check page is not cached as 'no AI'", async () => {
   assert.equal(storage.data.unslopCache?.["111"], undefined);
 });
 
-test("old 'no AI' entries are fetched again on stores in other languages", async () => {
+test("'no AI' entries of an older detection are fetched again", async () => {
   const old = { unslopCache: { 111: { ai: false, t: Date.now() } } };
   const html = block(headings.french, "...", "AI art.");
   let calls = 0;
@@ -90,9 +90,4 @@ test("old 'no AI' entries are fetched again on stores in other languages", async
   await sleep(300);
   assert.equal(calls, 1);
   assert.ok(blurred(fr), "the AI game is found now");
-
-  const en = page({ lang: "en", html: tile, fetch });
-  await en.SteamUnslop.start(memoryStorage(old));
-  await sleep(300);
-  assert.equal(calls, 1, "English and German stores were read before, so the entry stays");
 });

@@ -13,14 +13,19 @@ after(() => browser?.close());
 
 export async function storePage(
   html,
-  { cache = {}, settings = { minLevel: 0 }, viewport = { width: 1000, height: 800 } } = {},
+  {
+    cache = {},
+    settings = { minLevel: 0 },
+    viewport = { width: 1000, height: 800 },
+    language = "en",
+  } = {},
 ) {
   browser ||= await chromium.launch();
   const page = await browser.newPage({ viewport, reducedMotion: "reduce" });
   await page.route("https://store.steampowered.com/test", r =>
     r.fulfill({
       contentType: "text/html",
-      body: `<!doctype html><html lang="en"><body style="margin:0;padding:16px;background:#1b2838;font-family:Arial">${html}</body></html>`,
+      body: `<!doctype html><html lang="${language}"><body style="margin:0;padding:16px;background:#1b2838;font-family:Arial">${html}</body></html>`,
     }),
   );
   await page.goto("https://store.steampowered.com/test");
@@ -47,6 +52,6 @@ export const entry = (tags, extra = {}) => ({
   text: "x",
   name: "Game",
   t: Date.now(),
-  v: 2,
+  v: 3,
   ...extra,
 });

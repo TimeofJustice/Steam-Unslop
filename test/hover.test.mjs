@@ -40,7 +40,7 @@ for (const withId of [true, false]) {
     });
     await start(w, {
       111: entry(["art"], { name: "Wing Commander" }),
-      222: { ai: false, t: Date.now() },
+      222: { ai: false, t: Date.now(), v: 3 },
     });
     const [p1, p2] = w.document.querySelectorAll(".tab_preview");
     p1.style.display = "block";

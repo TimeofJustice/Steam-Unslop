@@ -11,3 +11,9 @@ platforms/millennium/webview/core.js
 platforms/millennium/frontend/strings.generated.ts
 platforms/millennium/node_modules/
 platforms/millennium/.millennium/
+
+# Rewritten by the Millennium toolchain on every pack
+platforms/millennium/package.json
+platforms/millennium/tsconfig.json
+platforms/millennium/*/tsconfig.json
+platforms/millennium/.luarc.json
