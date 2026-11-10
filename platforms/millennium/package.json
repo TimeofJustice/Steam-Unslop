@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "scripts": {
+    "core": "bun ../../scripts/build.mjs",
+    "dev": "bun run core && ./node_modules/.bin/starlight watch",
+    "build": "bun run core && ./node_modules/.bin/starlight pack",
+    "prepare": "bun run core && ./node_modules/.bin/starlight lsp"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.1",
+    "@types/react-dom": "19.1.1",
+    "@steambrew/starlight": "^1.1.3"
+  }
+}

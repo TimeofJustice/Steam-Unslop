@@ -1,0 +1,42 @@
+# Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+# SPDX-License-Identifier: Apache-2.0
+
+name: Release
+
+# Push a tag such as v1.6.0 (matching the version in package.json) to publish a release.
+# The release notes are the section of CHANGELOG.md for that version.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: oven-sh/setup-bun@v2
+      - name: Check that the tag matches package.json
+        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+      - run: npm ci
+      - run: npm test
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run check
+      - run: bun install --frozen-lockfile
+        working-directory: platforms/millennium
+      - run: npm run release
+      - name: Release notes from CHANGELOG.md
+        run: awk -v v="## ${GITHUB_REF_NAME#v}" '$0 == v {on=1; next} /^## / {on=0} on' CHANGELOG.md > release/NOTES.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.zip
+            release/*.star
+          body_path: release/NOTES.md

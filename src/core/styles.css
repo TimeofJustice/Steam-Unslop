@@ -1,0 +1,1226 @@
+/* Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+   SPDX-License-Identifier: Apache-2.0 */
+
+/* Colors follow the Steam store: review colors for the level, store tag colors for keywords. */
+.unslop-overlay,
+.unslop-mediainfo,
+.unslop-modal,
+.unslop-badge,
+.unslop-hoverinfo,
+.unslop-toast {
+  --u-font: "Motiva Sans", Arial, Helvetica, sans-serif;
+  --u-text: #c6d4df;
+  --u-muted: #8f98a0;
+  --u-label: #7a8c99;
+  --u-white: #fff;
+  --u-surface: #25282e;
+  --u-shade: rgba(0, 0, 0, 0.25);
+  --u-line: rgba(255, 255, 255, 0.08);
+  --u-high: #d9774b;
+  --u-high-bg: rgba(195, 92, 44, 0.22);
+  --u-mid: #b9a074;
+  --u-mid-bg: rgba(185, 160, 116, 0.2);
+  --u-low: #67c1f5;
+  --u-low-bg: rgba(103, 193, 245, 0.2);
+  --u-none: #8f98a0;
+  --u-none-bg: rgba(143, 152, 160, 0.2);
+  --u-radius: 3px;
+  font-family: var(--u-font);
+}
+
+/* ---------- Blurring ---------- */
+.unslop-blur {
+  position: relative;
+}
+.unslop-blur:not([data-unslop-inline]) {
+  clip-path: inset(0);
+}
+.unslop-blur > *:not(.unslop-overlay) {
+  filter: blur(14px) grayscale(0.6) brightness(0.8);
+  clip-path: inset(0);
+}
+/* Tiles without a box of their own: the largest child hosts the overlay. */
+.unslop-blur > [data-unslop-tile-host] {
+  filter: none;
+  clip-path: inset(0);
+}
+.unslop-blur > [data-unslop-tile-host="static"] {
+  position: relative;
+}
+.unslop-blur > [data-unslop-tile-host] > *:not(.unslop-overlay) {
+  filter: blur(14px) grayscale(0.6) brightness(0.8);
+  clip-path: inset(0);
+}
+
+/* Waiting for the rating, other media of a blurred game, and links not checked yet (hold).
+   Friend avatars stay sharp. */
+.unslop-media,
+.unslop-gmedia,
+.unslop-gwait,
+:is(
+    .unslop-wait,
+    html[data-unslop-hold] a[href*="/app/"]:not([data-unslop-id]):not([data-unslop-skip])
+  )
+  :is(img, video, [style*="background-image"]):not(
+    [src*="avatar" i],
+    [style*="avatar" i],
+    [class*="avatar" i],
+    [class*="avatar" i] *,
+    [class*="friend" i] *,
+    a[href*="steamcommunity.com"] *,
+    a[href*="/profiles/"] *,
+    a[href*="/id/"] *
+  ) {
+  filter: blur(14px) grayscale(0.6) brightness(0.8) !important;
+  clip-path: inset(0) !important;
+}
+.unslop-dim {
+  filter: blur(7px) grayscale(0.6);
+  clip-path: inset(0);
+  user-select: none;
+}
+.unslop-gone {
+  display: none !important;
+}
+html[data-unslop-hold-page] body {
+  visibility: hidden;
+}
+[data-unslop-host] {
+  position: relative;
+}
+
+/* ---------- Overlay on tiles and large media ---------- */
+.unslop-overlay,
+.unslop-mediainfo {
+  position: absolute;
+  z-index: 50;
+  overflow: hidden;
+  container-type: size;
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(23, 26, 33, 0.55), rgba(23, 26, 33, 0.86));
+  color: var(--u-text);
+  font-size: 12px;
+  text-align: center;
+  transition: background 0.15s;
+}
+.unslop-overlay {
+  inset: 0;
+}
+.unslop-overlay:hover,
+.unslop-mediainfo:hover {
+  background: linear-gradient(180deg, rgba(23, 26, 33, 0.62), rgba(23, 26, 33, 0.9));
+}
+.unslop-box {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.unslop-btns {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.unslop-overlay .unslop-tags em,
+.unslop-mediainfo .unslop-tags em {
+  font-size: 10px;
+  line-height: 16px;
+  padding: 0 5px;
+}
+.unslop-overlay .unslop-btn,
+.unslop-mediainfo .unslop-btn {
+  font-size: 11px;
+  line-height: 20px;
+  padding: 0 8px;
+}
+.unslop-ignored {
+  font-size: 11px;
+  line-height: 20px;
+  padding: 0 6px;
+  color: var(--u-muted);
+  white-space: nowrap;
+}
+
+/* Small tiles hide parts, the level stays; clicking anywhere still opens the reason. The
+   .unslop-box prefix makes these rules win over the general ones further down. */
+@container (max-height: 90px) {
+  .unslop-box .unslop-tags {
+    display: none;
+  }
+}
+@container (max-height: 50px) {
+  .unslop-box .unslop-btns {
+    display: none;
+  }
+}
+@container (max-width: 150px) {
+  .unslop-box .unslop-btn[data-tile-action="why"],
+  .unslop-box .unslop-meter {
+    display: none;
+  }
+}
+@container (max-width: 200px) {
+  .unslop-box .unslop-btn-ignore,
+  .unslop-box .unslop-ignored {
+    display: none;
+  }
+}
+
+/* Wide and flat rows: one line. */
+@container (min-aspect-ratio: 3/1) {
+  .unslop-box {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 0 10px;
+  }
+  .unslop-box > .unslop-level {
+    flex: none;
+  }
+  .unslop-box .unslop-tags {
+    display: flex;
+    justify-content: flex-start;
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .unslop-box .unslop-btns {
+    display: flex;
+    flex: none;
+    flex-wrap: nowrap;
+    margin-left: auto;
+  }
+  .unslop-box .unslop-btn[data-tile-action="why"],
+  .unslop-box .unslop-btn-ignore {
+    display: inline-flex;
+  }
+  .unslop-box .unslop-ignored {
+    display: inline;
+  }
+}
+/* Rows with room for two lines (search suggestions): level over tags, buttons on the right. */
+@container (min-aspect-ratio: 3/1) and (min-height: 44px) {
+  :not(.unslop-mode-actions) > .unslop-box {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "level btns" "tags btns";
+    align-content: center;
+    align-items: center;
+    justify-items: start;
+    column-gap: 10px;
+    row-gap: 4px;
+    text-align: left;
+  }
+  :not(.unslop-mode-actions) > .unslop-box > .unslop-level {
+    grid-area: level;
+  }
+  :not(.unslop-mode-actions) > .unslop-box > .unslop-tags {
+    grid-area: tags;
+    max-width: 100%;
+  }
+  :not(.unslop-mode-actions) > .unslop-box > .unslop-btns {
+    grid-area: btns;
+    margin-left: 0;
+  }
+}
+@container (min-aspect-ratio: 3/1) and (max-width: 440px) {
+  .unslop-box {
+    padding: 0 8px;
+    column-gap: 8px;
+  }
+  .unslop-box .unslop-btn {
+    padding: 0 6px;
+  }
+  .unslop-box .unslop-tags em {
+    line-height: 15px;
+    padding: 0 4px;
+  }
+}
+/* Groups split across two links: info on the image, actions on the flat strip. */
+.unslop-mode-actions .unslop-box {
+  flex-direction: row;
+  justify-content: flex-end;
+  padding: 0 8px;
+}
+.unslop-mode-actions .unslop-btns {
+  display: flex !important;
+  flex-wrap: nowrap;
+  margin-left: 0;
+}
+.unslop-mode-actions .unslop-btn[data-tile-action="why"],
+.unslop-mode-actions .unslop-btn-ignore {
+  display: inline-flex !important;
+}
+.unslop-mode-actions .unslop-ignored {
+  display: inline !important;
+}
+
+/* ---------- Level, meter and keyword chips ---------- */
+.unslop-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.unslop-level b {
+  font-weight: 500;
+  font-size: 13px;
+}
+.unslop-label {
+  color: var(--u-label);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.unslop-compact {
+  gap: 5px;
+  max-width: 100%;
+}
+.unslop-compact b {
+  font-size: 12px;
+}
+.unslop-ai {
+  font: 700 9px/14px var(--u-font);
+  letter-spacing: 0.05em;
+  padding: 0 4px;
+  border-radius: 2px;
+  color: var(--u-white);
+  background: rgba(255, 255, 255, 0.14);
+}
+.unslop-meter {
+  display: inline-flex;
+  gap: 2px;
+}
+.unslop-meter i {
+  width: 12px;
+  height: 4px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.unslop-compact .unslop-meter i {
+  width: 8px;
+  height: 3px;
+}
+.unslop-meter.lvl-1 i:nth-child(-n + 1),
+.unslop-meter.lvl-2 i:nth-child(-n + 2),
+.unslop-meter.lvl-3 i {
+  background: currentColor;
+}
+.unslop-meter.lvl-0 i {
+  background: rgba(143, 152, 160, 0.35);
+}
+.lvl-3 {
+  color: var(--u-high);
+}
+.lvl-2 {
+  color: var(--u-mid);
+}
+.lvl-1 {
+  color: var(--u-low);
+}
+.lvl-0 {
+  color: var(--u-none);
+}
+.unslop-unsure {
+  font-size: 10px;
+  line-height: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: help;
+  color: var(--u-muted);
+  border: 1px dashed rgba(143, 152, 160, 0.6);
+  border-radius: 2px;
+  padding: 0 5px;
+}
+.unslop-compact .unslop-unsure {
+  padding: 0 4px;
+  line-height: 13px;
+}
+.unslop-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+  max-width: 100%;
+}
+.unslop-tags em,
+.unslop-legend em {
+  font: 400 11px/19px var(--u-font);
+  font-style: normal;
+  white-space: nowrap;
+  padding: 0 7px;
+  border-radius: 2px;
+}
+.sev-3 {
+  color: var(--u-high);
+  background: var(--u-high-bg);
+}
+.sev-2 {
+  color: var(--u-mid);
+  background: var(--u-mid-bg);
+}
+.sev-1 {
+  color: var(--u-low);
+  background: var(--u-low-bg);
+}
+.sev-0 {
+  color: var(--u-none);
+  background: var(--u-none-bg);
+}
+
+/* ---------- Buttons (Steam style) ---------- */
+.unslop-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font: 400 12px/24px var(--u-font);
+  padding: 0 12px;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--u-white);
+  background: rgba(255, 255, 255, 0.1);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.unslop-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.unslop-btn-primary {
+  color: #d2efff;
+  background: rgba(103, 193, 245, 0.25);
+}
+.unslop-btn-primary:hover {
+  color: var(--u-white);
+  background: linear-gradient(-60deg, #417a9b 5%, #67c1f5 95%);
+}
+.unslop-modal .unslop-btn-primary {
+  color: var(--u-white);
+  background: linear-gradient(90deg, #47bfff 5%, #1a44c2 60%) 25% 0 / 330% 100%;
+}
+.unslop-modal .unslop-btn-primary:hover {
+  background-position: 0 0;
+}
+.unslop-btn[data-confirm] {
+  background: rgba(195, 92, 44, 0.6);
+}
+.unslop-btn:disabled {
+  cursor: default;
+  opacity: 0.8;
+}
+.unslop-btn svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+.unslop-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--u-muted);
+  background: transparent;
+}
+.unslop-icon-btn svg {
+  width: 12px;
+  height: 12px;
+}
+.unslop-icon-btn:hover {
+  color: var(--u-white);
+  background: rgba(255, 255, 255, 0.1);
+}
+:is(.unslop-btn, .unslop-icon-btn, .unslop-badge):focus-visible {
+  outline: 2px solid var(--u-low);
+  outline-offset: 1px;
+}
+
+/* ---------- Dialog ---------- */
+html[data-unslop-page] body > *:not(.unslop-modal) {
+  filter: blur(20px);
+  pointer-events: none;
+  user-select: none;
+}
+.unslop-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  overflow: hidden;
+  color: inherit;
+  background: rgba(0, 0, 0, 0.7);
+  animation: unslop-fade 0.15s ease-out;
+}
+.unslop-modal[open] {
+  display: flex;
+}
+.unslop-modal::backdrop {
+  background: transparent;
+}
+.unslop-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100vh - 32px);
+  overflow: hidden;
+  color: var(--u-text);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+  background:
+    radial-gradient(circle at top left, rgba(74, 81, 92, 0.4), rgba(75, 81, 92, 0) 60%),
+    var(--u-surface);
+  border-radius: var(--u-radius);
+  box-shadow: 0 0 12px #000;
+  animation: unslop-pop 0.18s ease-out;
+}
+/* Title and subtitle take all the room the tool buttons leave. */
+.unslop-dialog-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: start;
+  flex: none;
+  padding: 18px 14px 0 24px;
+}
+.unslop-dialog-title,
+.unslop-dialog-sub {
+  grid-column: 1;
+}
+.unslop-dialog-title {
+  color: var(--u-white);
+  font-size: 22px;
+  font-weight: 200;
+  letter-spacing: 0.02em;
+}
+.unslop-dialog-sub {
+  color: var(--u-muted);
+  font-size: 13px;
+}
+.unslop-dialog-tools {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  gap: 2px;
+  margin-top: -4px;
+}
+.unslop-dialog-tools:empty {
+  display: none;
+}
+.unslop-dialog-tools .unslop-icon-btn {
+  width: 32px;
+  height: 32px;
+}
+.unslop-dialog-tools .unslop-icon-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.unslop-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 24px 20px;
+}
+.unslop-dialog-body p {
+  margin: 0;
+  color: var(--u-muted);
+}
+.unslop-dialog .unslop-level b {
+  font-size: 15px;
+}
+.unslop-dialog .unslop-meter i {
+  width: 20px;
+  height: 5px;
+}
+.unslop-dialog .unslop-tags {
+  justify-content: flex-start;
+}
+.unslop-dialog .unslop-tags em {
+  font-size: 12px;
+  line-height: 22px;
+  padding: 0 9px;
+}
+.unslop-dialog .unslop-note .unslop-tags em {
+  font-size: 11px;
+  line-height: 19px;
+  padding: 0 7px;
+}
+.unslop-note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  background: rgba(185, 160, 116, 0.08);
+  border-left: 3px solid var(--u-mid);
+  color: var(--u-text);
+}
+.unslop-note b {
+  font-weight: 500;
+}
+.unslop-quote .unslop-label {
+  margin-bottom: 4px;
+}
+.unslop-dialog blockquote {
+  margin: 0;
+  padding: 10px 12px;
+  max-height: 260px;
+  overflow-y: auto;
+  white-space: pre-line;
+  background: rgba(0, 0, 0, 0.2);
+  border-left: 3px solid var(--u-line);
+  color: #acb2b8;
+  font-size: 13px;
+}
+.unslop-dialog blockquote.unslop-loading {
+  color: var(--u-muted);
+  animation: unslop-pulse 1.2s ease-in-out infinite;
+}
+.unslop-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.unslop-legend .unslop-label {
+  margin-right: 4px;
+}
+/* ---------- Settings ---------- */
+.unslop-settings-dialog {
+  max-width: 480px;
+}
+.unslop-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.unslop-choices legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+.unslop-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid transparent;
+  border-radius: var(--u-radius);
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.unslop-choice:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.unslop-choice:has(input:checked) {
+  background: rgba(103, 193, 245, 0.1);
+  border-color: rgba(103, 193, 245, 0.55);
+}
+.unslop-choice input {
+  flex: none;
+  margin: 0;
+  accent-color: var(--u-low);
+}
+.unslop-choice input:focus-visible {
+  outline: 2px solid var(--u-low);
+  outline-offset: 2px;
+}
+.unslop-choice-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.unslop-choice-text b {
+  color: var(--u-white);
+  font-weight: 500;
+  font-size: 14px;
+}
+.unslop-choice-text span {
+  color: var(--u-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.unslop-choice .unslop-meter {
+  flex: none;
+}
+.unslop-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+.unslop-actions .unslop-btn {
+  font-size: 15px;
+  line-height: 30px;
+  padding: 0 15px;
+}
+
+/* ---------- Star reminder: dialog footer and corner toast ---------- */
+.unslop-star,
+.unslop-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--u-muted);
+}
+.unslop-star[hidden] {
+  display: none;
+}
+.unslop-star {
+  flex: none;
+  padding: 10px 12px 10px 24px;
+  font-size: 13px;
+  background: var(--u-shade);
+  border-top: 1px solid var(--u-line);
+}
+.unslop-star-text {
+  flex: 1 1 auto;
+}
+.unslop-toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483646;
+  box-sizing: border-box;
+  max-width: min(380px, calc(100vw - 32px));
+  padding: 6px 6px 6px 12px;
+  gap: 8px;
+  font: 400 12px/1.4 var(--u-font);
+  background: rgba(23, 26, 33, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--u-radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  animation: unslop-toast-in 0.3s ease-out;
+}
+.unslop-toast .unslop-btn {
+  font-size: 12px;
+  line-height: 22px;
+  padding: 0 10px;
+}
+.unslop-toast-out {
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 0.25s,
+    transform 0.25s;
+}
+
+.unslop-quiz-open {
+  align-self: flex-start;
+}
+.unslop-exceptions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--u-line);
+}
+.unslop-exceptions .unslop-label {
+  margin-top: 6px;
+}
+.unslop-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.unslop-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 24px;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+.unslop-chip:hover,
+.unslop-chip:has(input:checked) {
+  opacity: 1;
+}
+.unslop-chip input {
+  margin: 0;
+  accent-color: var(--u-low);
+}
+.unslop-allow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.unslop-allow li[data-id] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 4px 2px 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--u-radius);
+  font-size: 13px;
+}
+.unslop-allow-empty,
+.unslop-allow-more {
+  color: var(--u-muted);
+  font-size: 12px;
+}
+.unslop-allow-more:empty {
+  display: none;
+}
+.unslop-tabs {
+  display: flex;
+  flex: none;
+  gap: 4px;
+  margin: 12px 24px 0;
+  border-bottom: 1px solid var(--u-line);
+}
+.unslop-tab {
+  margin-bottom: -1px;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font: 400 13px var(--u-font);
+  color: var(--u-muted);
+  background: none;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+.unslop-tab:hover {
+  color: var(--u-text);
+}
+.unslop-tab[aria-selected="true"] {
+  color: var(--u-white);
+  border-bottom-color: var(--u-low);
+}
+.unslop-tab:focus-visible {
+  outline: 2px solid var(--u-low);
+  outline-offset: -2px;
+}
+.unslop-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.unslop-tab-panel[hidden] {
+  display: none;
+}
+.unslop-search {
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  font: 400 13px var(--u-font);
+  color: var(--u-white);
+  background: rgba(0, 0, 0, 0.25);
+}
+.unslop-search::placeholder {
+  color: var(--u-muted);
+  font-style: italic;
+}
+.unslop-search:focus {
+  outline: none;
+  border-color: var(--u-low);
+}
+
+/* ---------- Finding the level with examples ---------- */
+.unslop-quiz {
+  max-width: 500px;
+}
+.unslop-quiz-step {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.unslop-quiz-step p {
+  margin: 0;
+  color: var(--u-text);
+}
+.unslop-quiz-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--u-radius);
+}
+.unslop-quiz-card .unslop-tags {
+  justify-content: flex-start;
+}
+.unslop-quiz-card .unslop-tags em {
+  font-size: 11px;
+  line-height: 18px;
+  padding: 0 6px;
+}
+.unslop-dialog .unslop-quiz-card blockquote {
+  margin: 0;
+  padding: 0;
+  max-height: none;
+  background: none;
+  border: 0;
+  color: #acb2b8;
+  font-size: 14px;
+  font-style: italic;
+}
+.unslop-push {
+  margin-right: auto;
+}
+/* Shows the result like a selected choice, but it is no control: no hover, no pointer. */
+.unslop-quiz-result {
+  pointer-events: none;
+  background: rgba(103, 193, 245, 0.1);
+  border-color: rgba(103, 193, 245, 0.55);
+}
+/* One grid for all rows, so the levels, texts and states line up. */
+.unslop-quiz-summary {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+.unslop-quiz-summary li {
+  display: contents;
+}
+.unslop-quiz-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--u-muted);
+}
+.unslop-quiz-state {
+  padding: 0 8px;
+  border-radius: 2px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--u-muted);
+  background: rgba(255, 255, 255, 0.06);
+}
+.unslop-quiz-state.on {
+  color: var(--u-low);
+  background: var(--u-low-bg);
+}
+
+/* ---------- First start tutorial ---------- */
+.unslop-tutorial {
+  max-width: 500px;
+}
+.unslop-tutorial .unslop-dialog-body {
+  gap: 20px;
+}
+.unslop-tutorial-step {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.unslop-tutorial-step p {
+  margin: 0;
+  color: var(--u-text);
+}
+.unslop-tutorial-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.unslop-tutorial-foot .unslop-actions {
+  margin: 0;
+}
+.unslop-tutorial [hidden] {
+  display: none;
+}
+.unslop-dots {
+  display: flex;
+  gap: 6px;
+}
+.unslop-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  transition: background 0.15s;
+}
+.unslop-dots i.on {
+  background: var(--u-low);
+}
+.unslop-demo-tile {
+  position: relative;
+  align-self: center;
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 460 / 215;
+  overflow: hidden;
+  border-radius: 2px;
+}
+.unslop-demo-art {
+  position: absolute;
+  inset: -20px;
+  filter: blur(12px) grayscale(0.35);
+  background:
+    radial-gradient(circle at 22% 38%, #f0a35e, transparent 32%),
+    radial-gradient(circle at 72% 42%, #5fb2f0, transparent 36%),
+    radial-gradient(circle at 48% 95%, #9bd06f, transparent 34%),
+    radial-gradient(circle at 88% 90%, #c86fd0, transparent 28%), #34465a;
+}
+/* The examples are pictures, not controls: no hover, no pointer. */
+.unslop-demo-tile,
+.unslop-demo-list .unslop-btn,
+.unslop-demo-icon {
+  pointer-events: none;
+}
+/* Equal rows keep the buttons evenly spaced when one explanation wraps. */
+.unslop-demo-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  grid-auto-rows: 1fr;
+  align-items: center;
+  gap: 8px 14px;
+  margin: 0;
+}
+.unslop-demo-list dt {
+  justify-self: stretch;
+  display: flex;
+}
+.unslop-demo-list dt .unslop-btn {
+  flex: 1 1 auto;
+}
+.unslop-demo-list dt .unslop-demo-icon {
+  flex: 1 1 auto;
+  width: auto;
+}
+.unslop-demo-list dd {
+  margin: 0;
+  color: var(--u-muted);
+  font-size: 13px;
+}
+.unslop-demo-list .unslop-btn {
+  font-size: 12px;
+}
+.unslop-demo-icon {
+  color: var(--u-text);
+  background: rgba(255, 255, 255, 0.1);
+}
+.unslop-demo-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------- Settings button in the store header ---------- */
+/* Next to the wishlist it wears Steam's own classes; only the icon needs sizing. */
+.unslop-nav-btn svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.unslop-nav-steam {
+  cursor: pointer;
+}
+.unslop-nav-steam svg {
+  margin-right: 6px;
+  vertical-align: -3px;
+}
+/* Fallback next to the search when signed out. */
+.unslop-nav-btn:not(.unslop-nav-steam) {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 6px;
+  flex: none;
+  height: 34px;
+  margin-left: 8px;
+  padding: 0 10px;
+  border-radius: 2px;
+  text-decoration: none;
+  font:
+    400 14px "Motiva Sans",
+    Arial,
+    Helvetica,
+    sans-serif;
+  color: #fff;
+  background: transparent;
+  transition: background 0.15s;
+}
+.unslop-nav-btn:not(.unslop-nav-steam):hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.unslop-nav-btn:focus-visible {
+  outline: 2px solid #67c1f5;
+  outline-offset: 1px;
+}
+
+/* ---------- Badge below the game title ---------- */
+.unslop-badge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 4px;
+  padding: 6px 10px;
+  color: var(--u-text);
+  font-size: 13px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.2);
+  border-left: 3px solid var(--u-mid);
+  transition: background 0.15s;
+}
+.unslop-badge[data-level="3"] {
+  border-left-color: var(--u-high);
+}
+.unslop-badge[data-level="1"] {
+  border-left-color: var(--u-low);
+}
+.unslop-badge[data-level="0"] {
+  border-left-color: var(--u-none);
+}
+.unslop-badge:hover {
+  background: rgba(0, 0, 0, 0.32);
+}
+.unslop-badge .unslop-tags {
+  justify-content: flex-start;
+}
+
+/* ---------- Hover popovers and preview panes ---------- */
+.unslop-hoverblur
+  :is(img, video, [style*="background-image"]):not(
+    [src*="avatar" i],
+    [style*="avatar" i],
+    [class*="avatar" i],
+    [class*="avatar" i] *,
+    [class*="friend" i] *,
+    a[href*="steamcommunity.com"] *,
+    a[href*="/profiles/"] *,
+    a[href*="/id/"] *
+  ) {
+  filter: blur(12px) grayscale(0.6) !important;
+  clip-path: inset(0) !important;
+}
+.unslop-hoverinfo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+  padding: 5px 8px;
+  background: var(--u-shade);
+  color: var(--u-text);
+  font-size: 12px;
+  line-height: normal;
+  text-align: left;
+}
+.unslop-hoverinfo,
+.unslop-hoverinfo * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+.unslop-hoverinfo .unslop-tags {
+  justify-content: flex-start;
+}
+.unslop-hoverinfo .unslop-tags em {
+  font-size: 10px;
+  line-height: 16px;
+  padding: 0 5px;
+}
+
+/* ---------- Motion and small screens ---------- */
+@keyframes unslop-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes unslop-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+@keyframes unslop-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@keyframes unslop-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .unslop-modal,
+  .unslop-dialog,
+  .unslop-toast,
+  .unslop-dialog blockquote.unslop-loading {
+    animation: none;
+  }
+  .unslop-overlay,
+  .unslop-mediainfo,
+  .unslop-badge,
+  .unslop-btn,
+  .unslop-tab,
+  .unslop-chip,
+  .unslop-choice,
+  .unslop-toast-out {
+    transition: none;
+  }
+}
+@media (max-width: 520px) {
+  .unslop-dialog-head {
+    padding: 14px 10px 0 16px;
+  }
+  .unslop-dialog-body {
+    padding: 10px 16px 16px;
+  }
+  .unslop-actions {
+    flex-wrap: wrap;
+  }
+  .unslop-actions .unslop-btn {
+    flex: 1 1 auto;
+  }
+  .unslop-star {
+    flex-wrap: wrap;
+    padding-left: 16px;
+  }
+}

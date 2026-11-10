@@ -1,0 +1,19 @@
+# Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+# SPDX-License-Identifier: Apache-2.0
+
+[plugin]
+id = "steam-unslop"
+name = "Steam Unslop"
+version = "1.6.0"
+author = "TimeofJustice"
+description = "Blurs games with an AI disclosure in the Steam store and shows how strongly and for what AI was used."
+
+[frontend]
+entry = "frontend/index.tsx"
+
+[webkit]
+entry = "webview/preload.ts"
+
+[compiler]
+# auto: detect the Millennium installation and install the plugin there
+output_path = "auto"

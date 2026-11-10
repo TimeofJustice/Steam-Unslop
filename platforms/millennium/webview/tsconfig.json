@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "millennium": ["../.millennium/lsp/webkit-ts"]
+    },
+    "typeRoots": ["../.millennium/types", "../node_modules/@types"]
+  }
+}

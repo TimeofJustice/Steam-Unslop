@@ -1,0 +1,35 @@
+{
+  "name": "steam-unslop",
+  "version": "1.6.0",
+  "private": true,
+  "type": "module",
+  "description": "Blurs Steam store games that disclose AI-generated content and rates how AI was used.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/build.mjs && node --test test/*.test.mjs",
+    "test:visual": "node scripts/build.mjs && node --test test/visual/*.test.mjs",
+    "lint": "eslint src platforms/extension scripts test eslint.config.js",
+    "check": "node scripts/build.mjs && node scripts/check.mjs",
+    "release": "node scripts/release.mjs",
+    "dev:millennium": "cd platforms/millennium && bun install && bun run build",
+    "screenshots": "node scripts/build.mjs && node scripts/screenshots.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "esbuild": "0.28.2",
+    "eslint": "9.39.5",
+    "gifenc": "1.0.3",
+    "globals": "17.14.0",
+    "jsdom": "24.1.3",
+    "playwright": "1.57.0",
+    "pngjs": "7.0.0",
+    "prettier": "3.9.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TimeofJustice/Steam-Unslop.git"
+  }
+}

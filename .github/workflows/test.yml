@@ -1,0 +1,27 @@
+# Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    # Pinned: Playwright 1.57 cannot install Chromium on ubuntu-latest (26.04).
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run check
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:visual

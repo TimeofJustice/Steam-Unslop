@@ -1,0 +1,13 @@
+# Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+# SPDX-License-Identifier: Apache-2.0
+
+# Generated or third-party files
+dist/
+release/
+docs/images/
+package-lock.json
+platforms/millennium/bun.lock
+platforms/millennium/webview/core.js
+platforms/millennium/frontend/strings.generated.ts
+platforms/millennium/node_modules/
+platforms/millennium/.millennium/
