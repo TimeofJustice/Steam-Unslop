@@ -1,4 +1,4 @@
-/* Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+/* Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
    SPDX-License-Identifier: Apache-2.0 */
 
 /* Colors follow the Steam store: review colors for the level, store tag colors for keywords. */
@@ -6,6 +6,7 @@
 .unslop-mediainfo,
 .unslop-modal,
 .unslop-badge,
+.unslop-report,
 .unslop-hoverinfo,
 .unslop-toast {
   --u-font: "Motiva Sans", Arial, Helvetica, sans-serif;
@@ -692,6 +693,22 @@ html[data-unslop-page] body > *:not(.unslop-modal) {
   padding: 0 15px;
 }
 
+/* Version and author below the buttons of the settings dialog. */
+.unslop-dialog-body .unslop-credit {
+  margin: 0;
+  color: var(--u-label);
+  font-size: 12px;
+  text-align: center;
+}
+.unslop-dialog-body .unslop-credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.unslop-dialog-body .unslop-credit a:hover {
+  color: var(--u-text);
+}
+
 /* ---------- Star reminder: dialog footer and corner toast ---------- */
 .unslop-star,
 .unslop-toast {
@@ -1123,6 +1140,25 @@ html[data-unslop-page] body > *:not(.unslop-modal) {
 }
 .unslop-badge .unslop-tags {
   justify-content: flex-start;
+}
+
+/* Game pages without a disclosure: a quiet line, so it does not look like a rating. */
+.unslop-report {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 8px 0 4px;
+  padding: 6px 10px;
+  color: var(--u-muted);
+  font: 400 13px var(--u-font);
+  background: rgba(0, 0, 0, 0.2);
+  border-left: 3px solid var(--u-line);
+}
+.unslop-report .unslop-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 /* ---------- Hover popovers and preview panes ---------- */

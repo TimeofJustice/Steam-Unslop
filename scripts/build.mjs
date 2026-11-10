@@ -1,4 +1,4 @@
-// Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+// Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
 // Builds the core bundle and the platform outputs.
@@ -48,7 +48,7 @@ const localeSection = section =>
 
 // Core bundle. It carries the license header once; the source comments are left out.
 const LICENSE_HEADER =
-  "// Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop\n" +
+  "// Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop\n" +
   "// SPDX-License-Identifier: Apache-2.0\n";
 
 const { outputFiles } = await build({

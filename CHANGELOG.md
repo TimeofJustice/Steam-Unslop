@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0
+
+- Game pages without an AI disclosure show "Report AI slop", which opens Steam's report dialog
+  for undisclosed AI content. Steam has no report reason for AI, so you choose the reason and
+  describe what you noticed.
+
 ## 1.6.2
 
 - Uses named after an exception in a denial now count: "No AI was used except for the voice

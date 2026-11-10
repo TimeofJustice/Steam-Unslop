@@ -27,6 +27,9 @@ listing.
   threshold stay visible; their game page only shows the rating below the title.
 - **Lets you act**: show a game anyway, or put it on Steam's ignore list. On your own wishlist,
   ignoring also removes the game from the wishlist, after a second click to confirm.
+- **Helps report undisclosed AI.** Game pages without a disclosure show "Report AI slop", which
+  opens Steam's own report dialog. Steam has no report reason for AI, so you choose the reason
+  and describe what you noticed.
 
 | Search results                                                  | Reason dialog                                                               |
 | --------------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -119,7 +122,8 @@ Steam Unslop reads that section and nothing else; there is no list of games and 
 - **Only disclosed AI is found.** Steam Unslop relies entirely on what developers declare. A game
   whose developer uses AI without saying so is not blurred, while honest developers are. A
   blurred game is therefore not worse than an unblurred one; it is only more open about it. The
-  rating shows how much AI a game discloses, not how much it contains.
+  rating shows how much AI a game discloses, not how much it contains. If you notice AI content
+  in a game without a disclosure, "Report AI slop" on its page lets you tell Valve.
 - **The detection is keyword based and can be wrong**, especially with mixed or unusual
   phrasing. The dialog always shows the developer's own statement, so you can check. If you find
   a game that is rated wrong, please open an issue with the game's name and the text of its
@@ -200,7 +204,7 @@ Add `src/locales/<lang>.json` with the same keys as `en.json` and import it in
 
 ## License
 
-Copyright 2026 Jonas Oelschner. Licensed under the [Apache License 2.0](LICENSE).
+Copyright 2026 Jonas Oelschner (TimeofJustice). Licensed under the [Apache License 2.0](LICENSE).
 
 You may use, change and share Steam Unslop, also in your own projects. When you share it or
 something based on it, keep the copyright notices in the files, include the [NOTICE](NOTICE)

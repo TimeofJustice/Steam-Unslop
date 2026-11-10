@@ -1,4 +1,4 @@
-// Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+// Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
 // Repository checks run in CI: license headers, ASCII-only code, matching versions.
@@ -26,7 +26,7 @@ for (const file of trackedFiles.filter(file => SOURCE_FILE.test(file) && isHandW
   const header = readFileSync(file, "utf8").split("\n").slice(0, 4).join("\n");
 
   const hasHeader =
-    header.includes("Copyright 2026 Jonas Oelschner") &&
+    header.includes("Copyright 2026 Jonas Oelschner (TimeofJustice)") &&
     header.includes("SPDX-License-Identifier: Apache-2.0");
   if (!hasHeader) problems.push(`${file}: missing license header`);
 }

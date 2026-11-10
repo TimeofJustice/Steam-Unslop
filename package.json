@@ -1,10 +1,14 @@
 {
   "name": "steam-unslop",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "private": true,
   "type": "module",
   "description": "Blurs Steam store games that disclose AI-generated content and rates how AI was used.",
   "license": "Apache-2.0",
+  "author": {
+    "name": "Jonas Oelschner (TimeofJustice)",
+    "url": "https://github.com/TimeofJustice"
+  },
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node scripts/build.mjs && node --test test/*.test.mjs",

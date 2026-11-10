@@ -1,9 +1,10 @@
-// Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+// Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
 import { texts } from "./i18n.js";
 import { ICONS, closeButtonHTML } from "./render.js";
 import { storage } from "./cache.js";
+import { REPOSITORY_URL } from "./project.js";
 
 /* "Star on GitHub" reminder, counted in uses rather than days:
    - in dialogs from the FIRST_DIALOG-th one on, and DIALOGS_BETWEEN dialogs after it is closed;
@@ -11,7 +12,6 @@ import { storage } from "./cache.js";
      PAGES_BETWEEN such pages.
    Clicking the link pauses both CLICKED_PAUSE_FACTOR times longer. Nothing shows before the
    stored state has loaded, so it does not flash up while paused. */
-const REPOSITORY_URL = "https://github.com/TimeofJustice/Steam-Unslop";
 export const STAR_KEY = "unslopStar";
 const TOAST_SHOWN_KEY = "unslopStarToast";
 export const OLD_STAR_KEYS = ["aislopStar", "aislopStarHidden", "aislopStarPause"];

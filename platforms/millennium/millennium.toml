@@ -1,10 +1,10 @@
-# Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+# Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 # SPDX-License-Identifier: Apache-2.0
 
 [plugin]
 id = "steam-unslop"
 name = "Steam Unslop"
-version = "1.6.2"
+version = "1.7.0"
 author = "TimeofJustice"
 description = "Blurs games with an AI disclosure in the Steam store and shows how strongly and for what AI was used."
 

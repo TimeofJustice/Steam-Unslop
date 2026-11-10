@@ -1,4 +1,4 @@
-// Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+// Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
 import STYLES from "./styles.css";
@@ -30,6 +30,7 @@ import {
 import { OLD_STAR_KEYS, STAR_KEY, countPageForStar, loadStarState } from "./star.js";
 import { openTutorial } from "./tutorial.js";
 import { addPageBadge, blockGamePage } from "./dialog.js";
+import { addReportBanner } from "./report.js";
 import { dimRow } from "./wishlist.js";
 import { blurCard, unblurCard } from "./card.js";
 import {
@@ -308,7 +309,7 @@ async function handleGamePage(appId, hasSessionSettings) {
   if (info) cache[appId].name = document.querySelector("#appHubAppName")?.textContent.trim() || "";
   saveCache();
 
-  if (!info) return;
+  if (!info) return addReportBanner();
   if (shouldBlur(info, appId)) blockGamePage(info, appId);
   else addPageBadge(info);
 }

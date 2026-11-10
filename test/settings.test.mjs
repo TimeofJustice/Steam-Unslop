@@ -1,8 +1,9 @@
-// Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+// Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { page, start, entry, disclosure, memoryStorage, sleep } from "./helpers.mjs";
 
 const tiles = `
@@ -285,4 +286,18 @@ test("the always shown games have their own tab with a search and five games at 
   d.querySelector(".unslop-settings-dialog [data-save]").click();
   assert.equal(storage.data.unslopSettings.allow.length, 7);
   assert.ok(!storage.data.unslopSettings.allow.some(a => a.id === "506"));
+});
+
+test("the settings show the running version and who made Steam Unslop", async () => {
+  const w = page({ html: tiles });
+  await start(w, cache);
+  const d = w.document;
+
+  d.querySelector('#low [data-tile-action="why"]').click();
+  d.querySelector(".unslop-dialog [data-settings]").click();
+
+  const { version } = JSON.parse(readFileSync("package.json", "utf8"));
+  const credit = settingsDialog(w).querySelector(".unslop-credit");
+  assert.equal(credit.textContent, `Steam Unslop ${version} \u00b7 by TimeofJustice`);
+  assert.equal(credit.querySelector("a").href, "https://github.com/TimeofJustice");
 });

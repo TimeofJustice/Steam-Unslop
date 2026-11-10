@@ -1,4 +1,4 @@
-// Copyright 2026 Jonas Oelschner. Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+// Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
 import { TAGS, TAG_BY_KEY, rate } from "./detection.js";
@@ -9,6 +9,7 @@ import { modalHeaderHTML, nextModalId, openModal } from "./modal.js";
 import { openLevelQuiz, selectLevel } from "./quiz.js";
 import { releasePageGateIfAllowed } from "./dialog.js";
 import { scan, start } from "./main.js";
+import { AUTHOR_NAME, AUTHOR_URL, VERSION } from "./project.js";
 
 /* User settings.
    minLevel:   games rated below it are not blurred (0 blurs every disclosure).
@@ -156,6 +157,14 @@ function renderAllowedGames(root, allowedGames, query) {
   });
 }
 
+// Which version is running and who made it, below the dialog buttons.
+function creditHTML() {
+  const authorLink = `<a href="${AUTHOR_URL}" target="_blank" rel="noopener">${AUTHOR_NAME}</a>`;
+  const credit = formatText(texts.credit, { version: VERSION, author: authorLink });
+
+  return `<p class="unslop-credit">${credit}</p>`;
+}
+
 const settingsDialogHTML =
   titleId => `<div class="unslop-dialog unslop-settings-dialog" role="dialog" aria-modal="true" aria-labelledby="${titleId}">
     ${modalHeaderHTML(titleId, { dismissable: true })}
@@ -174,6 +183,7 @@ const settingsDialogHTML =
         <button class="unslop-btn unslop-btn-secondary" data-close>${texts.cancel}</button>
         <button class="unslop-btn unslop-btn-primary" data-save>${texts.save}</button>
       </div>
+      ${creditHTML()}
     </div></div>`;
 
 function selectTab(root, selectedTab) {
