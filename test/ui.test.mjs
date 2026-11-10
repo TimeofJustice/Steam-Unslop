@@ -3,7 +3,16 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { page, start, disclosure, entry, overlayMode, sleep, hover } from "./helpers.mjs";
+import {
+  page,
+  start,
+  disclosure,
+  entry,
+  noAiEntry,
+  overlayMode,
+  sleep,
+  hover,
+} from "./helpers.mjs";
 
 const gameHtml = disclosure(
   "AI generation tools were used only as a starting point for some visual assets, every one was edited by our art team. Japanese uses AI-assisted translation as a provisional measure.",
@@ -249,7 +258,7 @@ test("discovery carousel: screenshots and trailer of the AI game are blurred and
   });
   await start(w, {
     111: entry(["art"], { name: "AI Game" }),
-    222: { ai: false, t: Date.now(), v: 3 },
+    222: noAiEntry(),
   });
   const d = w.document;
   const cls = (s, c) => d.querySelector(s).classList.contains(c);
@@ -356,7 +365,7 @@ test("search suggestion rows with display: contents get the overlay on their own
       <a id="other" data-r="0,270,350,60" href="https://store.steampowered.com/app/222/"><img src="b.jpg"></a>
     </div>`,
   });
-  await start(w, { 111: entry(["transl"]), 222: { ai: false, t: Date.now(), v: 3 } });
+  await start(w, { 111: entry(["transl"]), 222: noAiEntry() });
   const d = w.document;
   assert.ok(d.querySelector("#row").classList.contains("unslop-blur"));
   assert.ok(
@@ -486,7 +495,7 @@ test("the same game listed twice in a result list gets two full overlays", async
   const row = (n, id) =>
     `<a id="r${n}" class="search_result_row" data-r="0,${n * 50},900,45" href="https://store.steampowered.com/app/${id}/"><img src="${id}.jpg"></a>`;
   const w = page({ html: `<div id="rows">${row(1, 111)}${row(2, 222)}${row(3, 111)}</div>` });
-  await start(w, { 111: entry(["art"]), 222: { ai: false, t: Date.now(), v: 3 } });
+  await start(w, { 111: entry(["art"]), 222: noAiEntry() });
   assert.equal(overlayMode(w, "#r1"), "full");
   assert.equal(overlayMode(w, "#r3"), "full");
 });

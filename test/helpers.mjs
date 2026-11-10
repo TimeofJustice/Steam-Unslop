@@ -8,18 +8,20 @@ import { readFileSync } from "node:fs";
 const CORE = readFileSync(new URL("../dist/core.js", import.meta.url), "utf8");
 
 export const CACHE_KEY = "unslopCache";
+export const ENTRY_VERSION = Number(/var ENTRY_VERSION = (\d+);/.exec(CORE)[1]);
+export const noAiEntry = () => ({ ai: false, t: Date.now(), v: ENTRY_VERSION });
 // Values from the jsdom window have a foreign Array prototype; deepStrictEqual needs plain copies.
 export const plain = x => JSON.parse(JSON.stringify(x));
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
 export const disclosure = text =>
   `<h2>AI Generated Content Disclosure</h2><p>${text}</p><h2>System Requirements</h2>`;
-// v: ENTRY_VERSION in src/core/cache.js, so the entries count as rated by the current detection.
+// Entries rated by the current detection, so they are not fetched again.
 export const entry = (tags, extra = {}) => ({
   ai: true,
   tags,
   text: "x",
   t: Date.now(),
-  v: 3,
+  v: ENTRY_VERSION,
   ...extra,
 });
 export const hover = (w, sel) =>

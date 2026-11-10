@@ -200,3 +200,43 @@ test("upscaling is its own kind of use, so upscale-only disclosures are not uncl
     "'enhanced' alone is no upscaling",
   );
 });
+
+test("a use named after an exception counts, an excluded one does not", () => {
+  const tagsOf = text => plain(analyze(text).tags);
+
+  assert.deepEqual(tagsOf("No AI was used except for the voice acting."), ["voice"]);
+  assert.deepEqual(tagsOf("Nothing in the game is AI generated, apart from the translations."), [
+    "transl",
+  ]);
+  assert.deepEqual(tagsOf("Keine KI, au\u00dfer bei der \u00dcbersetzung."), ["transl"]);
+  assert.deepEqual(tagsOf("We used AI for all textures except the character portraits."), ["art"]);
+  assert.deepEqual(tagsOf("Besides the art, AI was also used for the music."), ["art", "music"]);
+
+  const denial = analyze("No generative AI was used in the final product.");
+  assert.deepEqual(plain(denial.tags), []);
+  assert.deepEqual(keys(SteamUnslop.rate(denial)), ["denied"]);
+});
+
+test("AI assets replaced by the team lower the level, assets replaced by AI do not", () => {
+  const replacedByTeam = analyze(
+    "Generative AI technology is used in a supplementary capacity during the creation of some 2D prop assets.<br>" +
+      "Any such assets are replaced through our production pipeline by our art and development teams, " +
+      "ensuring they meet our quality standards and creative direction.",
+  );
+  const rating = SteamUnslop.rate(replacedByTeam);
+  assert.equal(rating.rawLevel, 2);
+  assert.equal(rating.level, 1);
+  assert.ok(keys(rating).includes("temp"));
+
+  const german = SteamUnslop.rate(
+    analyze("KI-Grafiken werden vor dem Release durch unser Art-Team ersetzt."),
+  );
+  assert.equal(german.level, 1);
+
+  for (const text of [
+    "Die Sprecher wurden durch KI-Stimmen ersetzt.",
+    "AI-generated music replaced our old soundtrack.",
+  ]) {
+    assert.equal(SteamUnslop.rate(analyze(text)).lowered, false, text);
+  }
+});

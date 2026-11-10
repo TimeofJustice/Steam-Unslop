@@ -3,7 +3,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { page, memoryStorage, disclosure, hover, sleep } from "./helpers.mjs";
+import { page, memoryStorage, disclosure, noAiEntry, hover, sleep } from "./helpers.mjs";
 
 const storePage = `<html><body><div id="appHubAppName">G</div>${disclosure("AI art.")}</body></html>`;
 const countingFetch = calls => async url => {
@@ -80,9 +80,7 @@ test("hold blurs unchecked game links, non-tiles are released", async () => {
   });
   w.SteamUnslop.hold();
   assert.ok(w.document.documentElement.hasAttribute("data-unslop-hold"));
-  await w.SteamUnslop.start(
-    memoryStorage({ unslopCache: { 111: { ai: false, t: Date.now(), v: 3 } } }),
-  );
+  await w.SteamUnslop.start(memoryStorage({ unslopCache: { 111: noAiEntry() } }));
   assert.equal(w.document.querySelector("#tile").dataset.unslopId, "111");
   assert.equal(w.document.querySelector("#text").dataset.unslopSkip, "1");
 });

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.2
+
+- Uses named after an exception in a denial now count: "No AI was used except for the voice
+  acting" is rated as voices instead of no AI. In an affirmative statement, an exception leaves
+  that part out ("AI for all textures except the portraits").
+- AI assets that the developer's team replaces lower the level and mark it as uncertain, e.g.
+  "such assets are replaced by our art and development teams". Content replaced by AI, such as
+  "replaced with AI voices", is not lowered.
+- Games rated by the previous detection are rated again.
+- The README explains the limits: only disclosed AI is found, so a blurred game is more open
+  about its AI use, not necessarily worse.
+
 ## 1.6.1
 
 - Games already in the cache are rated again when the detection has changed, instead of keeping

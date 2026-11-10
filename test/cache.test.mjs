@@ -3,7 +3,15 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { page, memoryStorage, disclosure, sleep, plain, CACHE_KEY } from "./helpers.mjs";
+import {
+  page,
+  memoryStorage,
+  disclosure,
+  sleep,
+  plain,
+  CACHE_KEY,
+  ENTRY_VERSION,
+} from "./helpers.mjs";
 
 const tile = `<a id="t" href="https://store.steampowered.com/app/111/"><img src="a.jpg"></a>`;
 const storePage = `<html><body><div id="appHubAppName">Test Game</div>${disclosure("AI voices.")}</body></html>`;
@@ -99,7 +107,14 @@ test("results and rate limits from other tabs are taken over without fetching", 
   // Another tab hit the rate limit and then found the game.
   w.SteamUnslop.applyStored("unslopPause", Date.now() + 60000);
   w.SteamUnslop.applyStored(CACHE_KEY, {
-    111: { ai: true, tags: ["voice"], text: "AI voices.", name: "G", t: Date.now(), v: 3 },
+    111: {
+      ai: true,
+      tags: ["voice"],
+      text: "AI voices.",
+      name: "G",
+      t: Date.now(),
+      v: ENTRY_VERSION,
+    },
   });
   await sleep(100);
   assert.ok(blurred(w), "blurred from the other tab's result");
@@ -144,7 +159,7 @@ test("AI entries of an older detection are rated again and stay ignored", async 
   assert.equal(calls, 1);
   const entry = storage.data[CACHE_KEY]["111"];
   assert.deepEqual(plain(entry.tags), ["transl"]);
-  assert.equal(entry.v, 3);
+  assert.equal(entry.v, ENTRY_VERSION);
   assert.equal(entry.ignored, true);
   assert.equal(entry.name, "Elven Game");
 });

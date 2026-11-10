@@ -17,3 +17,6 @@ release/
 
 # Real store disclosures for the local regression test (scripts/collect-disclosures.mjs)
 test/fixtures/
+
+# Local list of games left out of the README screenshots (scripts/screenshots.mjs)
+scripts/screenshots-excluded.json

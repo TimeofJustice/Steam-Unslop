@@ -49,8 +49,9 @@ const storePageUrl = appId => `https://store.steampowered.com/app/${appId}/`;
 
 /* Raise it whenever the detection changes: entries rated by an older detection are fetched
    again, so improvements reach games that are already cached.
-   2: every store language. 3: since 1.6.1, older entries may carry ratings of earlier builds. */
-export const ENTRY_VERSION = 3;
+   2: every store language. 3: since 1.6.1, older entries may carry ratings of earlier builds.
+   4: uses named after an exception ("no AI except for the voices"), assets replaced by people. */
+export const ENTRY_VERSION = 4;
 
 const hintKeysOf = info => findHints(info.text, info.tags).map(hint => hint.key);
 

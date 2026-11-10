@@ -8,6 +8,7 @@ import { after } from "node:test";
 import { readFileSync } from "node:fs";
 
 const CORE = readFileSync(new URL("../../dist/core.js", import.meta.url), "utf8");
+const ENTRY_VERSION = Number(/var ENTRY_VERSION = (\d+);/.exec(CORE)[1]);
 let browser;
 after(() => browser?.close());
 
@@ -52,6 +53,6 @@ export const entry = (tags, extra = {}) => ({
   text: "x",
   name: "Game",
   t: Date.now(),
-  v: 3,
+  v: ENTRY_VERSION,
   ...extra,
 });

@@ -317,7 +317,7 @@ const HINTS = [
       "repainted",
       "painted over",
       "modified",
-      "by (?:our )?(?:art |human )?(?:team|artists?|humans?|hand)",
+      "by (?:our |the )?(?:(?:art|human|development|design)(?: and \\w+)? )?(?:teams?|artists?|humans?|hand)",
       "human \\w+",
       "hand[- ](?:drawn|painted|made|crafted)",
       "ueberarbeitet",
@@ -355,10 +355,14 @@ const HINTS = [
       "temporar\\w*",
       "placeholders?",
       "(?:will|to) be replaced",
+      // Replaced by people, not "replaced with AI voices".
+      "replaced(?: \\S+){0,6}? (?:by|with) (?:our |the |a |real |professional |final )*" +
+        "(?:art(?:ists?)?|teams?|humans?|people|developers?|designers?|illustrators?|actors?|hand)",
       "vorlaeufig\\w*",
       "uebergangsweise",
       "platzhalter",
       "(?:wird|werden) ersetzt",
+      "(?:von|durch) (?:\\S+ ){0,4}?(?!ki-)(?:\\S+-)?(?:team|kuenstler\\w*|menschen|entwickler\\w*|sprecher\\w*) ersetzt",
     ]),
   },
   {
@@ -524,10 +528,44 @@ const isOnlyHumanWork = clause =>
 
 const describesUse = clause => !isNegated(clause) && !isOnlyHumanWork(clause);
 
+// Texts are folded first, so "ausser" also stands for the German spelling with sharp s.
+const EXCEPTION = wholeWords([
+  "except(?: for)?",
+  "apart from",
+  "aside from",
+  "other than",
+  "besides",
+  "save for",
+  "with the exception of",
+  "ausser(?: fuer| bei| dem| der| den)?",
+  "abgesehen von",
+  "bis auf",
+  "mit ausnahme (?:von|der|des)",
+]);
+
+// "Besides" or "apart from" may also mean "in addition to"; these only ever exclude.
+const STRICT_EXCEPTION = /^(?:except|with the exception|ausser|bis auf|mit ausnahme)/;
+
+/* "No AI except for the voices" names a use after a denial, while "AI for everything except the
+   music" leaves the music out. So the part after an exception counts on its own after a negated
+   clause and is dropped after an affirmative one. */
+function splitAtException(clause) {
+  const match = EXCEPTION.exec(clause);
+  if (!match) return [clause];
+
+  const before = clause.slice(0, match.index).trim();
+  const after = clause.slice(match.index + match[0].length).trim();
+
+  if (isNegated(before)) return [before, after].filter(Boolean);
+  if (before && STRICT_EXCEPTION.test(match[0])) return [before];
+  return [clause];
+}
+
 const clausesOf = text =>
   foldUmlauts(text || "")
     .split(CLAUSE_SPLIT)
-    .filter(Boolean);
+    .filter(Boolean)
+    .flatMap(splitAtException);
 
 function plainTextOf(html) {
   const withLineBreaks = html.replace(/<br\s*\/?>|<\/p>|<\/div>/gi, "\n");

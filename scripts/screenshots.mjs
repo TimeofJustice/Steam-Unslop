@@ -7,7 +7,7 @@
 import { chromium } from "playwright";
 import { PNG } from "pngjs";
 import gifenc from "gifenc";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,6 +17,22 @@ const repositoryRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const imageFolder = join(repositoryRoot, "docs/images");
 const searchTerm = process.argv[2] || "puzzle";
 const GIF_SCALE = 0.6;
+
+// The README images show real store results, so the search leaves out games with Steam tags
+// for mature or sensitive themes.
+const EXCLUDED_TAG_IDS = [
+  12095, 6650, 9130, 4345, 4667, 1667, 1721, 4085, 9551, 31579, 180368, 1678,
+];
+
+/* Games that slip through can be left out locally: copy scripts/screenshots-excluded.example.json
+   to scripts/screenshots-excluded.json (not in the repository) and fill in app ids or title
+   words. Title words match whole words, case-insensitively. */
+const EXCLUSION_FILE = join(repositoryRoot, "scripts/screenshots-excluded.json");
+const exclusions = existsSync(EXCLUSION_FILE)
+  ? JSON.parse(readFileSync(EXCLUSION_FILE, "utf8"))
+  : {};
+const excludedAppIds = (exclusions.appIds || []).map(String);
+const excludedTitleWords = exclusions.titleWords || [];
 
 mkdirSync(imageFolder, { recursive: true });
 
@@ -96,12 +112,45 @@ async function recordFrames(duration) {
   }
 }
 
+// Removes the rows of locally excluded games and hides what shows the excluded tags: the notes
+// above the results and the "Narrow by tag" block in the sidebar.
+const prepareSearchPage = () =>
+  page.evaluate(
+    ({ appIds, titleWords }) => {
+      const escapedWords = titleWords.map(word => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+      const excludedTitle = escapedWords.length
+        ? new RegExp(`(?<![\\p{L}\\d])(?:${escapedWords.join("|")})(?![\\p{L}\\d])`, "iu")
+        : null;
+
+      for (const row of document.querySelectorAll("a.search_result_row")) {
+        const title = row.querySelector(".title")?.textContent || "";
+        const isExcluded = appIds.includes(row.dataset.dsAppid) || !!excludedTitle?.test(title);
+
+        if (isExcluded) row.remove();
+      }
+
+      const filterNotes = document.querySelectorAll(
+        '.termcontainer, .search_results_filtered_warning, [data-collapse-name="tags"]',
+      );
+      for (const note of filterNotes) note.style.display = "none";
+    },
+    { appIds: excludedAppIds, titleWords: excludedTitleWords },
+  );
+
 // 1. Search results with blurred rows, scrolled so the first one sits below the sticky header.
-await openStorePage(
-  `https://store.steampowered.com/search/?term=${encodeURIComponent(searchTerm)}`,
-);
+const searchUrl = new URL("https://store.steampowered.com/search/");
+searchUrl.searchParams.set("term", searchTerm);
+searchUrl.searchParams.set("untags", EXCLUDED_TAG_IDS.join(","));
+
+await openStorePage(searchUrl.href);
+await page.waitForSelector("a.search_result_row", { timeout: 60000 });
+
+await prepareSearchPage();
 await waitForBlurredTile();
 await page.waitForTimeout(6000);
+
+// Rows loaded meanwhile by the infinite scroll are checked too.
+await prepareSearchPage();
 
 const scrollToFirstBlurredRow = () =>
   page.evaluate(() => {

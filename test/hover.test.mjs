@@ -3,7 +3,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { page, start, entry, hover, sleep } from "./helpers.mjs";
+import { page, start, entry, noAiEntry, hover, sleep } from "./helpers.mjs";
 
 test("classic and generic hover popovers get the info and blurred images", async () => {
   const w = page({
@@ -40,7 +40,7 @@ for (const withId of [true, false]) {
     });
     await start(w, {
       111: entry(["art"], { name: "Wing Commander" }),
-      222: { ai: false, t: Date.now(), v: 3 },
+      222: noAiEntry(),
     });
     const [p1, p2] = w.document.querySelectorAll(".tab_preview");
     p1.style.display = "block";

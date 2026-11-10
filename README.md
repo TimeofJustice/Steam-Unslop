@@ -92,10 +92,12 @@ Steam Unslop reads that section and nothing else; there is no list of games and 
 1. **Finding games.** Every link to a game with a capsule image counts as a tile. When a tile
    comes near the viewport, the game's store page is fetched (four at a time, newest first,
    with a pause when Steam rate-limits). Until the answer arrives, the tile stays blurred, so AI
-   art never flashes up.
+   art never flashes up. The whole page is needed: Steam's APIs such as `appdetails` do not
+   include the disclosure.
 2. **Reading the disclosure.** The statement is split into clauses. Negated clauses ("AI was
    not used for music"), hypothetical ones ("if you believe an artwork looks like AI") and pure
-   statements about human work ("all art is made by our artists") are dropped. The rest is
+   statements about human work ("all art is made by our artists") are dropped. After a denial,
+   an exception still counts as a use ("no AI except for the voices"). The rest is
    matched against keyword lists in English and German, plus Chinese, Japanese and Korean. The
    disclosure itself is found in every store language.
 3. **Rating.** Each tag has a weight (art, voices or video weigh more than translation, code or
@@ -109,11 +111,19 @@ Steam Unslop reads that section and nothing else; there is no list of games and 
    in Millennium), plus a copy in `sessionStorage` so known games are blurred instantly on the
    next page. Statement texts are not stored; the dialog loads them again. Open store tabs share
    their results, so each game is fetched once, and a rate limit pauses all of them. Pages of
-   mature games behind the age check are not rated until you passed it once.
+   mature games behind the age check are not rated until you passed it once. When an update
+   improves the detection, cached games are rated again.
 
-The detection is keyword based and can be wrong. The dialog always shows the developer's own
-statement, so you can check. If you find a game that is rated wrong, please open an issue with
-the game's name and the text of its disclosure.
+### Limits
+
+- **Only disclosed AI is found.** Steam Unslop relies entirely on what developers declare. A game
+  whose developer uses AI without saying so is not blurred, while honest developers are. A
+  blurred game is therefore not worse than an unblurred one; it is only more open about it. The
+  rating shows how much AI a game discloses, not how much it contains.
+- **The detection is keyword based and can be wrong**, especially with mixed or unusual
+  phrasing. The dialog always shows the developer's own statement, so you can check. If you find
+  a game that is rated wrong, please open an issue with the game's name and the text of its
+  disclosure.
 
 ### Privacy
 
@@ -140,6 +150,12 @@ npm run screenshots     # regenerate docs/images from the live store (Playwright
 
 For quick iteration in Chrome, run `npm run build` and load `dist/extension` as an unpacked
 extension.
+
+The screenshots show real store results. The search leaves out games with Steam tags for
+mature or sensitive themes; to leave out more, copy
+`scripts/screenshots-excluded.example.json` to `scripts/screenshots-excluded.json` (gitignored)
+and add app ids or title words. A search term other than "puzzle" can be passed with
+`npm run screenshots -- <term>`.
 
 ### Layout
 
