@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.1
+
+- The bundle dialog and the cart warning no longer leave empty space below a short developer
+  statement when there is only one game to show.
+
 ## 1.9.0
 
 - Kinds of use chosen in the settings are left out of the rating: the level is worked out from

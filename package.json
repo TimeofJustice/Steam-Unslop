@@ -1,6 +1,6 @@
 {
   "name": "steam-unslop",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "private": true,
   "type": "module",
   "description": "Blurs Steam store games that disclose AI-generated content and rates how AI was used.",

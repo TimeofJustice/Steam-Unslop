@@ -949,9 +949,12 @@ html[data-unslop-page] body > *:not(.unslop-modal) {
 .unslop-game-rating .unslop-tags {
   justify-content: flex-start;
 }
-/* Three lines at least, so short statements do not make the buttons jump when turning pages. */
 .unslop-dialog .unslop-game-page blockquote {
   margin: 0;
+}
+/* With several pages, three lines at least, so short statements do not make the buttons jump
+   when turning pages. A single game needs no room to spare. */
+.unslop-game-pages:has(.unslop-game-nav:not([hidden])) .unslop-game-page blockquote {
   min-height: 4.5em;
 }
 .unslop-game-nav {
