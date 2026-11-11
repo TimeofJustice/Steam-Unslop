@@ -366,6 +366,15 @@ html[data-unslop-hold-page] body {
 .unslop-tags em[hidden] {
   display: none;
 }
+/* Wraps the rating part of the reason dialog, which is drawn again on setting changes. */
+.unslop-rating-part {
+  display: contents;
+}
+/* Kinds of use the user left out of the rating. */
+.unslop-tags em.unslop-tag-excluded {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
 .unslop-tags em,
 .unslop-legend em {
   font: 400 11px/19px var(--u-font);
@@ -801,12 +810,17 @@ html[data-unslop-page] body > *:not(.unslop-modal) {
   cursor: pointer;
   font-size: 12px;
   line-height: 24px;
-  opacity: 0.55;
   transition: opacity 0.15s;
 }
-.unslop-chip:hover,
+/* A checked kind of use is left out of the rating, so it looks like an excluded tag. */
 .unslop-chip:has(input:checked) {
-  opacity: 1;
+  opacity: 0.45;
+}
+.unslop-chip:has(input:checked) span {
+  text-decoration: line-through;
+}
+.unslop-chip:has(input:checked):hover {
+  opacity: 0.7;
 }
 .unslop-chip input {
   margin: 0;

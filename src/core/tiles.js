@@ -1,7 +1,6 @@
 // Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
-import { rate } from "./detection.js";
 import { tagLabel, texts } from "./i18n.js";
 import { compactLevelHTML, hintListText, sortBySeverity, tagsHTML } from "./render.js";
 import { addClass, appIdOf, areaOf, removeClass } from "./dom.js";
@@ -11,6 +10,7 @@ import { closeAction, openReasonDialog } from "./dialog.js";
 import { dimRow, hideRow, isOwnWishlistRow, showHiddenRow, undimRow } from "./wishlist.js";
 import { blurCard, unblurCard } from "./card.js";
 import { revealAppId, revealedAppIds } from "./media.js";
+import { rateForUser } from "./settings.js";
 
 const NAME_SELECTOR = ".title, .tab_item_name, [class*='Title'], [class*='name']";
 
@@ -396,7 +396,7 @@ function overlayTooltip(info, rating) {
 function addOverlay(target, mainLink, mode) {
   const info = mainLink._unslopInfo;
   const appId = mainLink.dataset.unslopId;
-  const rating = rate(info);
+  const rating = rateForUser(info);
 
   const overlay = document.createElement("div");
   overlay.className = `unslop-overlay unslop-mode-${mode}`;
@@ -432,6 +432,13 @@ function addOverlay(target, mainLink, mode) {
 
   overlayHostOf(target).appendChild(overlay);
   fitTagsOnResize(overlay);
+}
+
+// Rebuilds the overlays, e.g. after the excluded kinds of use changed.
+export function refreshOverlays() {
+  for (const link of document.querySelectorAll("a.unslop-blur:not([data-unslop-plain])")) {
+    if (link._unslopInfo) arrangeOverlays(link);
+  }
 }
 
 export function unblurTileGroup(mainLink) {

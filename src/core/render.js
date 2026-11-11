@@ -13,17 +13,30 @@ export const ICONS = {
   star: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6l1.9 4 4.3.5-3.2 3 .9 4.3L8 11.2l-3.9 2.2.9-4.3-3.2-3 4.3-.5z" fill="currentColor"/></svg>',
 };
 
+// The kinds of use the user excluded from the rating; set by settings.js.
+let excludedTagKeys = new Set();
+
+export const setExcludedTags = tagKeys => {
+  excludedTagKeys = new Set(tagKeys);
+};
+
+// Counted tags first, strongest first; excluded ones at the end.
 export function sortBySeverity(tagKeys) {
+  const orderOf = key => (excludedTagKeys.has(key) ? -10 : 0) + TAG_BY_KEY[key].severity;
+
   return tagKeys
     .filter(key => TAG_BY_KEY[key])
-    .sort((first, second) => TAG_BY_KEY[second].severity - TAG_BY_KEY[first].severity);
+    .sort((first, second) => orderOf(second) - orderOf(first));
 }
 
-export function tagsHTML(tagKeys) {
-  return sortBySeverity(tagKeys)
-    .map(key => `<em class="sev-${TAG_BY_KEY[key].severity}">${tagLabel(key)}</em>`)
-    .join("");
+function tagHTML(key) {
+  const severityClass = `sev-${TAG_BY_KEY[key].severity}`;
+  if (!excludedTagKeys.has(key)) return `<em class="${severityClass}">${tagLabel(key)}</em>`;
+
+  return `<em class="${severityClass} unslop-tag-excluded" title="${texts.tagExcluded}">${tagLabel(key)}</em>`;
 }
+
+export const tagsHTML = tagKeys => sortBySeverity(tagKeys).map(tagHTML).join("");
 
 export const meterHTML = level =>
   `<span class="unslop-meter lvl-${level}"><i></i><i></i><i></i></span>`;
@@ -37,6 +50,12 @@ export const closeButtonHTML = (className, attribute, title) =>
   iconButtonHTML(className, attribute, title, ICONS.close);
 
 // "AI Medium ===", with a "?" when the rating is uncertain; used on tiles and popovers.
+function levelNameHTML(rating) {
+  if (rating.allExcluded)
+    return `<b class="lvl-0" title="${texts.tagExcluded}">${texts.levelExcluded}</b>`;
+  return `<b class="lvl-${rating.level}">${texts.levels[rating.level]}</b>${meterHTML(rating.level)}`;
+}
+
 export function compactLevelHTML(rating) {
   const uncertainMark = rating.uncertain
     ? `<span class="unslop-unsure" title="${texts.unsureTip}: ${hintListText(rating)}">?</span>`
@@ -44,7 +63,7 @@ export function compactLevelHTML(rating) {
 
   return (
     `<span class="unslop-level unslop-compact"><span class="unslop-ai">${texts.ai}</span>` +
-    `<b class="lvl-${rating.level}">${texts.levels[rating.level]}</b>${meterHTML(rating.level)}` +
+    levelNameHTML(rating) +
     `${uncertainMark}</span>`
   );
 }
@@ -57,7 +76,7 @@ export function levelHTML(rating) {
 
   return (
     `<span class="unslop-level"><span class="unslop-label">${texts.usage}</span>` +
-    `<b class="lvl-${rating.level}">${texts.levels[rating.level]}</b>${meterHTML(rating.level)}` +
+    levelNameHTML(rating) +
     `${uncertainMark}</span>`
   );
 }

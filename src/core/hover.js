@@ -1,11 +1,11 @@
 // Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
-import { rate } from "./detection.js";
-import { shouldBlur } from "./settings.js";
+import { rateForUser, shouldBlur } from "./settings.js";
 import { addClass, appIdOf, isVisible, removeClass } from "./dom.js";
 import { cachedEntry, fetchRating } from "./cache.js";
 import { arrangeOverlays, capsuleNameOf, learnHoverTile, ratingInfoHTML } from "./tiles.js";
+import { redrawOnRatingChange } from "./refresh.js";
 import { checkHoveredLink } from "./main.js";
 
 /* Hover popovers and preview panes get the AI info inserted and their images blurred. Steam has
@@ -17,6 +17,10 @@ const POPOVER_SELECTOR =
   '[class*="tooltip" i], [class*="flyout" i], [class*="preview" i]';
 const OWN_UI_SELECTOR = ".unslop-overlay, .unslop-modal, .unslop-hoverinfo, .unslop-dialog";
 const CHECK_DELAYS = [120, 350, 700, 1200, 2000];
+
+redrawOnRatingChange(() => {
+  document.querySelectorAll(".unslop-hoverinfo").forEach(infoBox => infoBox.remove());
+});
 
 // { appId, link, name, time } of the last hovered game link.
 let hovered = null;
@@ -80,7 +84,7 @@ function decorate(popover, appId, name) {
 
   const infoBox = document.createElement("div");
   infoBox.className = "unslop-hoverinfo";
-  infoBox.innerHTML = ratingInfoHTML(rate(entry), entry.tags);
+  infoBox.innerHTML = ratingInfoHTML(rateForUser(entry), entry.tags);
 
   const titleElement = titleElementOf(popover, name);
   if (titleElement) titleElement.after(infoBox);

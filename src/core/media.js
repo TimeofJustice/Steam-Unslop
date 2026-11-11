@@ -1,9 +1,8 @@
 // Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
-import { rate } from "./detection.js";
 import { texts } from "./i18n.js";
-import { shouldBlur } from "./settings.js";
+import { rateForUser, shouldBlur } from "./settings.js";
 import { AVATAR_SELECTOR, MEDIA_SELECTOR, currentAppId, toggleClass } from "./dom.js";
 import { cachedEntry, fetchRating } from "./cache.js";
 import { handleIgnoreClick } from "./steam-api.js";
@@ -16,6 +15,7 @@ import {
   tileAreaOf,
 } from "./tiles.js";
 import { SCAN_MARGIN, requestScan } from "./main.js";
+import { redrawOnRatingChange } from "./refresh.js";
 
 /* Screenshots and trailers outside of game links, e.g. the large preview of the discovery queue.
    Steam serves them from URLs with the app id (/steam/apps/<id>/ss_*.jpg, /store_trailers/<id>/),
@@ -27,6 +27,10 @@ const MIN_INFO_WIDTH = 280;
 const MIN_INFO_HEIGHT = 140;
 
 export const revealedAppIds = new Set();
+
+redrawOnRatingChange(() => {
+  document.querySelectorAll(".unslop-mediainfo").forEach(infoBox => infoBox.remove());
+});
 
 // App id -> the info element on the largest medium of that game.
 const mediaInfoBoxes = new Map();
@@ -196,7 +200,7 @@ function createMediaInfoBox(appId, host) {
 
   const infoBox = document.createElement("div");
   infoBox.className = "unslop-mediainfo";
-  infoBox.innerHTML = `<div class="unslop-box">${ratingInfoHTML(rate(info), info.tags)}${actionButtonsHTML(info, false)}</div>`;
+  infoBox.innerHTML = `<div class="unslop-box">${ratingInfoHTML(rateForUser(info), info.tags)}${actionButtonsHTML(info, false)}</div>`;
 
   // Capture phase: carousels must neither navigate nor switch slides.
   for (const type of ["click", "mousedown", "pointerdown"]) {

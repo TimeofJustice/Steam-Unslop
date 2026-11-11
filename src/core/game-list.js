@@ -1,16 +1,16 @@
 // Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
-import { rate } from "./detection.js";
 import { formatText, texts } from "./i18n.js";
 import { compactLevelHTML, tagsHTML } from "./render.js";
 import { loadDetails } from "./cache.js";
+import { rateForUser } from "./settings.js";
 
 /* The AI games of a bundle or a cart, one page per game: name, level, tags and the developer's
    statement, with buttons (and the arrow keys) to turn the pages. A statement is loaded when its
    page is shown first, so a large bundle does not fetch all its store pages at once.
    games: [{ appId, entry }]. */
-const levelOf = game => rate(game.entry).level;
+const levelOf = game => rateForUser(game.entry).level;
 
 export const sortByLevel = games =>
   [...games].sort(
@@ -77,7 +77,7 @@ export function fillGameList(root, games) {
 
     nameElement.textContent = gameNameOf(game);
     ratingElement.innerHTML =
-      compactLevelHTML(rate(game.entry)) +
+      compactLevelHTML(rateForUser(game.entry)) +
       `<span class="unslop-tags">${tagsHTML(game.entry.tags)}</span>`;
     showStatement(game, index);
 
@@ -105,4 +105,7 @@ export function fillGameList(root, games) {
   });
 
   showPage(0);
+
+  // Draws the shown page again, e.g. after the excluded kinds of use changed.
+  return () => showPage(currentIndex);
 }

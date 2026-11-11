@@ -301,3 +301,91 @@ test("the settings show the running version and who made Steam Unslop", async ()
   assert.equal(credit.textContent, `Steam Unslop ${version} \u00b7 by TimeofJustice`);
   assert.equal(credit.querySelector("a").href, "https://github.com/TimeofJustice");
 });
+
+test("excluded kinds of use leave the rating and are shown struck through", async () => {
+  const w = page({
+    html: `<a id="mixed" data-r="0,0,300,140" href="https://store.steampowered.com/app/333/"><img src="c.jpg"></a>`,
+  });
+  const storage = memoryStorage({
+    unslopCache: { 333: entry(["live", "transl"]) },
+    unslopSettings: { minLevel: 0, ignoreTags: ["live"] },
+  });
+  await w.SteamUnslop.start(storage);
+  await sleep(50);
+  const d = w.document;
+
+  // Without live AI only the translation counts: Low instead of High.
+  assert.ok(blurred(w, "#mixed"));
+  assert.match(d.querySelector("#mixed .unslop-level").textContent, /Low/);
+
+  const tags = [...d.querySelectorAll("#mixed .unslop-tags em")];
+  assert.deepEqual(
+    tags.map(tag => [tag.textContent, tag.classList.contains("unslop-tag-excluded")]),
+    [
+      ["Translation", false],
+      ["Live AI in game", true],
+    ],
+    "the excluded tag comes last and is marked",
+  );
+
+  // Excluding the translation too leaves nothing to blur for.
+  w.SteamUnslop.applySettings({ minLevel: 0, ignoreTags: ["live", "transl"] });
+  assert.ok(!blurred(w, "#mixed"));
+});
+
+test("a game whose uses are all left out reads as left out, not as denied", async () => {
+  const statement =
+    "All of our quests are written by human authors. During play, an optional AI Dungeon Master " +
+    "narrates the story: its dialogue is generated live by language models. You can disable it.";
+  const w = page({
+    url: "https://store.steampowered.com/app/444/",
+    html: `<div id="appHubAppName">Dungeon Game</div>${disclosure(statement)}`,
+  });
+  await w.SteamUnslop.start(
+    memoryStorage({ unslopSettings: { minLevel: 0, ignoreTags: ["live"] } }),
+  );
+  await sleep(50);
+  const d = w.document;
+
+  assert.equal(settingsDialog(w), null);
+  assert.ok(!("unslopPage" in d.documentElement.dataset), "the page is not held back");
+
+  d.querySelector(".unslop-badge").click();
+  const dialogText = d.querySelector(".unslop-dialog").textContent;
+  assert.match(d.querySelector(".unslop-dialog .unslop-level").textContent, /Left out/);
+  assert.match(dialogText, /Optional/, "the developer's qualifier stays");
+  assert.doesNotMatch(dialogText, /Denies/, "leaving out a tag is no denial");
+});
+
+test("changing the left out kinds redraws the page badge and an open dialog at once", async () => {
+  const w = page({
+    url: "https://store.steampowered.com/app/555/",
+    html:
+      '<div id="appHubAppName">Mixed Game</div>' +
+      disclosure(
+        "NPCs answer in real time using a large language model. We used AI for translation.",
+      ),
+  });
+  await w.SteamUnslop.start(
+    memoryStorage({ unslopSettings: { minLevel: 2, ignoreTags: ["live"] } }),
+  );
+  await sleep(50);
+  const d = w.document;
+  const badgeLevel = () => d.querySelector(".unslop-badge .unslop-level b").textContent;
+
+  // Only the translation counts, which is below the blur level: the page shows with Low.
+  assert.equal(badgeLevel(), "Low");
+
+  d.querySelector(".unslop-badge").click();
+  const dialogLevel = () => d.querySelector(".unslop-dialog .unslop-level b").textContent;
+  assert.equal(dialogLevel(), "Low");
+
+  w.SteamUnslop.applySettings({ minLevel: 2, ignoreTags: [] });
+  assert.equal(badgeLevel(), "High", "the badge counts live AI again without a reload");
+  assert.equal(dialogLevel(), "High", "so does the open dialog");
+  assert.equal(
+    d.querySelector(".unslop-dialog .unslop-tags em.unslop-tag-excluded"),
+    null,
+    "no tag is struck through any more",
+  );
+});

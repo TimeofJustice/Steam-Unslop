@@ -138,7 +138,9 @@
       "NPCs answer you through a large language model while you play."
     ],
     "exceptions": "Exceptions",
-    "ignoreTagsLabel": "Never blur when AI was only used for",
+    "ignoreTagsLabel": "Leave out of the rating",
+    "levelExcluded": "Left out",
+    "tagExcluded": "Left out of the rating in your settings",
     "allowEmpty": "No games yet.",
     "allowRemove": "Remove",
     "alwaysShow": "Always show",

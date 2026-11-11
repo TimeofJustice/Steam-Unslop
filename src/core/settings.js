@@ -3,17 +3,20 @@
 
 import { TAGS, TAG_BY_KEY, rate } from "./detection.js";
 import { formatText, tagLabel, texts } from "./i18n.js";
-import { ICONS, meterHTML } from "./render.js";
+import { ICONS, meterHTML, setExcludedTags } from "./render.js";
 import { storage } from "./cache.js";
 import { modalHeaderHTML, nextModalId, openModal } from "./modal.js";
 import { openLevelQuiz, selectLevel } from "./quiz.js";
 import { releasePageGateIfAllowed } from "./dialog.js";
 import { scan, start } from "./main.js";
+import { refreshOverlays } from "./tiles.js";
+import { redrawRatings } from "./refresh.js";
 import { AUTHOR_NAME, AUTHOR_URL, VERSION } from "./project.js";
 
 /* User settings.
    minLevel:   games rated below it are not blurred (0 blurs every disclosure).
-   ignoreTags: games whose AI use is only these kinds (e.g. translation) are not blurred.
+   ignoreTags: kinds of use (e.g. translation) left out of the rating; a game with nothing else
+               is not blurred.
    allow:      games the user always wants to see, [{ id, name }]. */
 export const SETTINGS_KEY = "unslopSettings";
 const DEFAULT_SETTINGS = { minLevel: 0, ignoreTags: [], allow: [] };
@@ -43,6 +46,7 @@ export function loadSessionSettings() {
   try {
     const saved = JSON.parse(sessionStorage.getItem(SETTINGS_KEY) || "null");
     settings = normalizeSettings(saved);
+    setExcludedTags(settings.ignoreTags);
     return !!saved;
   } catch {
     return false;
@@ -50,7 +54,9 @@ export function loadSessionSettings() {
 }
 
 export function setSettings(nextSettings, persist) {
+  const excludedBefore = settings.ignoreTags.join(",");
   settings = normalizeSettings(nextSettings);
+  setExcludedTags(settings.ignoreTags);
 
   try {
     sessionStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -61,7 +67,26 @@ export function setSettings(nextSettings, persist) {
   if (persist) storage.save(SETTINGS_KEY, JSON.parse(JSON.stringify(settings)));
 
   releasePageGateIfAllowed();
+  if (start.done && settings.ignoreTags.join(",") !== excludedBefore) {
+    refreshOverlays();
+    redrawRatings();
+  }
   if (start.done) scan();
+}
+
+const countedTagsOf = info => info.tags.filter(tagKey => !settings.ignoreTags.includes(tagKey));
+
+/* The rating with the excluded kinds of use left out, as the user sees it. The developer's
+   qualifiers are worked out from the whole statement, so leaving out a tag never turns it into
+   a denial. allExcluded: every kind of use was left out. */
+export function rateForUser(info) {
+  const countedTags = countedTagsOf(info);
+  const hintKeys = rate(info).hints.map(hint => hint.key);
+
+  return {
+    ...rate({ ...info, tags: countedTags, hints: hintKeys }),
+    allExcluded: info.tags.length > 0 && countedTags.length === 0,
+  };
 }
 
 // info: a disclosure ({ tags, text }); whether a game has one at all is checked by the caller.
@@ -69,11 +94,10 @@ export function shouldBlur(info, appId) {
   const isAllowed = appId && settings.allow.some(game => game.id === String(appId));
   if (isAllowed) return false;
 
-  const onlyIgnoredTags =
-    info.tags.length && info.tags.every(tagKey => settings.ignoreTags.includes(tagKey));
-  if (onlyIgnoredTags) return false;
+  // Every kind of use was excluded, so nothing is left to blur for.
+  if (info.tags.length && !countedTagsOf(info).length) return false;
 
-  return rate(info).level >= settings.minLevel;
+  return rateForUser(info).level >= settings.minLevel;
 }
 
 export function allowGame(appId, name) {

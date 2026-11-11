@@ -51,8 +51,9 @@ const storePageUrl = appId => `https://store.steampowered.com/app/${appId}/`;
    again, so improvements reach games that are already cached.
    2: every store language. 3: since 1.6.1, older entries may carry ratings of earlier builds.
    4: uses named after an exception ("no AI except for the voices"), assets replaced by people.
-   5: human work described with adjectives ("made by our talented team"). */
-export const ENTRY_VERSION = 5;
+   5: human work described with adjectives ("made by our talented team").
+   6: dialogue or voices of live AI count as live AI only. */
+export const ENTRY_VERSION = 6;
 
 const hintKeysOf = info => findHints(info.text, info.tags).map(hint => hint.key);
 

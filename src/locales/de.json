@@ -138,7 +138,9 @@
       "NPCs antworten dir während des Spiels über ein großes Sprachmodell."
     ],
     "exceptions": "Ausnahmen",
-    "ignoreTagsLabel": "Nie verschwimmen, wenn KI nur genutzt wurde für",
+    "ignoreTagsLabel": "Bei der Bewertung nicht mitzählen",
+    "levelExcluded": "Ausgenommen",
+    "tagExcluded": "In deinen Einstellungen von der Bewertung ausgenommen",
     "allowEmpty": "Noch keine Spiele.",
     "allowRemove": "Entfernen",
     "alwaysShow": "Immer anzeigen",

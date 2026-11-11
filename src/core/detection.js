@@ -616,20 +616,50 @@ function joinForMatching(clauses) {
     .replace(TRANSLATED_TEXT, "translation");
 }
 
+const matchesTag = (tag, usage) => tag.pattern.test(usage) || !!tag.cjkPattern?.test(usage);
+
+/* Runtime generation is one use, even when its sentence also names dialogue or voices ("AI
+   powers real-time dialogue"). These tags count on their own only from a sentence that is not
+   about live AI. A sentence goes on across colons and semicolons ("an AI narrates the story:
+   its dialogue is generated live"), but ends at a contrast ("..., but the story was written
+   with ChatGPT"). */
+const PART_OF_LIVE_AI = ["text", "voice"];
+const SENTENCE_SPLIT =
+  /[.!?]+(?:\s+|$)|[\u3002\uff01\uff1f]+|\n|,?\s+(?:but|however|although|whereas|aber|jedoch|sondern|allerdings)\s+/i;
+
+// The tags of a clause. Live AI also counts in conditional clauses ("if you ask an NPC, an LLM
+// answers"), the other tags only in actual use.
+function tagsOfClause(clause) {
+  const usage = joinForMatching([clause]);
+  const isHypothetical = HYPOTHETICAL.test(clause);
+
+  const clauseTags = TAGS.filter(
+    tag => (tag.key === "live" || !isHypothetical) && matchesTag(tag, usage),
+  );
+  return clauseTags.map(tag => tag.key);
+}
+
+// The tags of each sentence, from its clauses that describe a use.
+function tagsPerSentence(statement) {
+  return statement
+    .split(SENTENCE_SPLIT)
+    .filter(Boolean)
+    .map(sentence => new Set(clausesOf(sentence).filter(describesUse).flatMap(tagsOfClause)));
+}
+
 // Returns { tags, text } for a store page with a disclosure, otherwise null.
 export function analyze(html) {
   const statement = disclosureStatement(html);
   if (statement === null) return null;
 
-  const usageClauses = clausesOf(statement).filter(describesUse);
-  // Live AI also counts in conditional clauses ("if you ask an NPC, an LLM answers").
-  const allUsage = joinForMatching(usageClauses);
-  const actualUsage = joinForMatching(usageClauses.filter(clause => !HYPOTHETICAL.test(clause)));
+  const sentenceTags = tagsPerSentence(statement);
 
-  const tags = TAGS.filter(tag => {
-    const usage = tag.key === "live" ? allUsage : actualUsage;
-    return tag.pattern.test(usage) || !!tag.cjkPattern?.test(usage);
-  }).map(tag => tag.key);
+  const isFound = key => sentenceTags.some(found => found.has(key));
+  const onlyPartOfLiveAi = key =>
+    PART_OF_LIVE_AI.includes(key) &&
+    sentenceTags.every(found => !found.has(key) || found.has("live"));
+
+  const tags = TAGS.map(tag => tag.key).filter(key => isFound(key) && !onlyPartOfLiveAi(key));
 
   const text =
     statement.length > MAX_STATEMENT_LENGTH

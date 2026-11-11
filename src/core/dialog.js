@@ -1,10 +1,9 @@
 // Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
-import { rate } from "./detection.js";
 import { texts } from "./i18n.js";
 import { levelHTML, tagsHTML, uncertaintyNoteHTML } from "./render.js";
-import { allowGame, openSettings, shouldBlur } from "./settings.js";
+import { allowGame, openSettings, rateForUser, shouldBlur } from "./settings.js";
 import { loadDetails } from "./cache.js";
 import { handleIgnoreClick } from "./steam-api.js";
 import {
@@ -14,6 +13,7 @@ import {
   starBannerHTML,
 } from "./star.js";
 import { modalHeaderHTML, nextModalId, openModal } from "./modal.js";
+import { redrawOnRatingChange } from "./refresh.js";
 import { fillGameList, gameListHTML, sortByLevel } from "./game-list.js";
 
 export const closeAction = () => ({
@@ -47,8 +47,15 @@ function statementHTML(info) {
   return `<section class="unslop-quote"><div class="unslop-label">${texts.devStatement}</div><blockquote></blockquote></section>`;
 }
 
-function reasonDialogHTML(info, rating, { titleId, intro, actions, dismissable, allowId }) {
+// Level, tags and the note on qualifiers; drawn again when the settings change.
+function ratingPartHTML(info) {
+  const rating = rateForUser(info);
   const tagList = tagsHTML(info.tags) || `<em class="sev-0">${texts.noDetails}</em>`;
+
+  return `${levelHTML(rating)}<div class="unslop-tags">${tagList}</div>${uncertaintyNoteHTML(rating)}`;
+}
+
+function reasonDialogHTML(info, { titleId, intro, actions, dismissable, allowId }) {
   const legend =
     `<em class="sev-3">${texts.levels[3]}</em>` +
     `<em class="sev-2">${texts.levels[2]}</em>` +
@@ -58,9 +65,7 @@ function reasonDialogHTML(info, rating, { titleId, intro, actions, dismissable, 
     ${modalHeaderHTML(titleId, { dismissable, settingsButton: true })}
     <div class="unslop-dialog-body">
       <p>${intro}</p>
-      ${levelHTML(rating)}
-      <div class="unslop-tags">${tagList}</div>
-      ${uncertaintyNoteHTML(rating)}
+      <div class="unslop-rating-part">${ratingPartHTML(info)}</div>
       ${statementHTML(info)}
       <div class="unslop-legend"><span class="unslop-label">${texts.legend}</span>${legend}</div>
       <div class="unslop-actions">${actionButtonsHTML(actions, allowId)}</div>
@@ -75,7 +80,6 @@ export function openReasonDialog(
   info,
   { title, subtitle, intro, actions, dismissable, appId, allowId },
 ) {
-  const rating = rate(info);
   const titleId = nextModalId();
   countDialogOpened();
 
@@ -95,13 +99,22 @@ export function openReasonDialog(
     if (actionButton) actions[actionButton.dataset.action].run(close, actionButton);
   };
 
+  let stopRedrawing = () => {};
+
   const close = openModal(
-    reasonDialogHTML(info, rating, { titleId, intro, actions, dismissable, allowId }),
-    { dismissable, onClick: handleClick },
+    reasonDialogHTML(info, { titleId, intro, actions, dismissable, allowId }),
+    { dismissable, onClick: handleClick, onClose: () => stopRedrawing() },
   );
 
   const modal = document.getElementById(titleId).closest(".unslop-modal");
   modal.querySelector(".unslop-dialog-title").textContent = title;
+
+  const ratingPart = modal.querySelector(".unslop-rating-part");
+  let redrawGameList = () => {};
+  stopRedrawing = redrawOnRatingChange(() => {
+    ratingPart.innerHTML = ratingPartHTML(info);
+    redrawGameList();
+  });
 
   subtitleElement = modal.querySelector(".unslop-dialog-sub");
   const needsName = !!appId && subtitle === undefined && !info.name;
@@ -111,7 +124,7 @@ export function openReasonDialog(
   else if (!needsName) subtitleElement.remove();
 
   if (info.bundle) {
-    fillGameList(modal, sortByLevel(info.games));
+    redrawGameList = fillGameList(modal, sortByLevel(info.games));
     return close;
   }
 
@@ -190,19 +203,25 @@ export function blockGamePage(info, appId) {
 }
 
 // Summary below the game title once the page is shown; opens the reason again.
+function drawPageBadge(pageBadge, info) {
+  const rating = rateForUser(info);
+
+  pageBadge.dataset.level = rating.allExcluded ? 0 : rating.level;
+  pageBadge.innerHTML = `${levelHTML(rating)}<span class="unslop-tags">${tagsHTML(info.tags)}</span>`;
+}
+
 export function addPageBadge(info) {
   const gameTitle = document.querySelector("#appHubAppName, .apphub_AppName");
   if (!gameTitle || document.querySelector(".unslop-badge")) return;
 
-  const rating = rate(info);
-
   const pageBadge = document.createElement("div");
   pageBadge.className = "unslop-badge";
-  pageBadge.dataset.level = rating.level;
   pageBadge.tabIndex = 0;
   pageBadge.title = texts.clickTip;
   pageBadge.setAttribute("role", "button");
-  pageBadge.innerHTML = `${levelHTML(rating)}<span class="unslop-tags">${tagsHTML(info.tags)}</span>`;
+
+  drawPageBadge(pageBadge, info);
+  redrawOnRatingChange(() => drawPageBadge(pageBadge, info));
 
   pageBadge.addEventListener("click", () =>
     openReasonDialog(info, {

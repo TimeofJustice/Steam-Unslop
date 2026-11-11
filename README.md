@@ -55,8 +55,9 @@ to pick? "Find your level with examples" shows eight typical disclosures, asks f
 it should be blurred, and suggests the level that matches your answers; you can keep it or
 choose yourself.
 
-Two exceptions are set in the same dialog: kinds of use that alone never blur a game (for example
-only translation or code), and games you always want to see, added with "Always show" in a
+Two exceptions are set in the same dialog: kinds of use left out of the rating (for example
+translation or code), which then show greyed out and struck through, and a game with nothing else
+is not blurred; and games you always want to see, added with "Always show" in a
 game's dialog and listed with a search in their own tab. The level can also be set in the popup of the Chrome extension and in the
 Millennium settings. A change applies at once, in all open store tabs and windows.
 
