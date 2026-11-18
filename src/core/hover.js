@@ -4,7 +4,13 @@
 import { rateForUser, shouldBlur } from "./settings.js";
 import { addClass, appIdOf, isVisible, removeClass } from "./dom.js";
 import { cachedEntry, fetchRating } from "./cache.js";
-import { arrangeOverlays, capsuleNameOf, learnHoverTile, ratingInfoHTML } from "./tiles.js";
+import {
+  arrangeOverlays,
+  capsuleNameOf,
+  learnHoverTile,
+  placeInfoSigns,
+  ratingInfoHTML,
+} from "./tiles.js";
 import { redrawOnRatingChange } from "./refresh.js";
 import { checkHoveredLink } from "./main.js";
 
@@ -159,6 +165,7 @@ export function decorateHovers() {
     const needsArranging =
       mainLink._unslopPlain?.length && mainLink._unslopInfo && !mainLink.dataset.unslopShown;
     if (needsArranging) arrangeOverlays(mainLink, true);
+    if (hover.link.dataset.unslopShown) placeInfoSigns(hover.link);
   }
 
   const popovers = unknownPopovers();

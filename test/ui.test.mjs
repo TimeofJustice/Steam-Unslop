@@ -124,7 +124,7 @@ test("screenshots next to the tile in the same card are blurred too", async () =
   assert.equal(d.querySelectorAll(".unslop-media").length, 0, "show anyway reveals the whole card");
 });
 
-test("GitHub star banner shows from the third dialog and comes back after 15 more", async () => {
+test("GitHub star banner shows from the third dialog and never again once closed", async () => {
   const w = page({
     html: `<a id="t" data-r="0,0,300,140" href="https://store.steampowered.com/app/111/"><img src="a.jpg"></a>`,
   });
@@ -132,49 +132,72 @@ test("GitHub star banner shows from the third dialog and comes back after 15 mor
   const d = w.document;
   const open = () => {
     d.querySelector('#t [data-tile-action="why"]').click();
-    const b = d.querySelector(".unslop-star");
-    return { b, close: () => d.querySelector("[data-close]").click() };
+    const banner = d.querySelector(".unslop-star");
+    return { banner, close: () => d.querySelector("[data-close]").click() };
   };
-  for (let i = 1; i <= 2; i++) {
-    const o = open();
-    assert.ok(o.b.hidden, `not on dialog ${i}`);
-    o.close();
+
+  for (let index = 1; index <= 2; index++) {
+    const dialog = open();
+    assert.ok(dialog.banner.hidden, `not on dialog ${index}`);
+    dialog.close();
   }
+
   const third = open();
-  assert.ok(!third.b.hidden, "third dialog shows it");
-  assert.equal(third.b.querySelector("a").href, "https://github.com/TimeofJustice/Steam-Unslop");
-  third.b.querySelector("[data-star-hide]").click();
-  assert.ok(third.b.hidden);
+  assert.ok(!third.banner.hidden, "third dialog shows it");
+  assert.equal(
+    third.banner.querySelector("a").href,
+    "https://github.com/TimeofJustice/Steam-Unslop",
+  );
+
+  third.banner.querySelector("[data-star-hide]").click();
+  assert.ok(third.banner.hidden);
   assert.ok(d.querySelector(".unslop-modal"), "closing the banner does not close the dialog");
   third.close();
-  assert.deepEqual({ ...storage.data.unslopStar }, { opens: 3, modalAt: 18, pages: 1, toastAt: 5 });
-  for (let i = 4; i < 18; i++) {
-    const o = open();
-    assert.ok(o.b.hidden);
-    o.close();
+  assert.equal(storage.data.unslopStar.done, true);
+
+  for (let index = 4; index < 30; index++) {
+    const dialog = open();
+    assert.ok(dialog.banner.hidden, "it does not come back");
+    dialog.close();
   }
-  assert.ok(!open().b.hidden, "back after 15 more dialogs");
 });
 
-test("star toast: shown on a page with blurred games when due, once per session", async () => {
+test("a star reminder closed before 2.0 stays closed", async () => {
   const html = `<a id="t" data-r="0,0,300,140" href="https://store.steampowered.com/app/111/"><img src="a.jpg"></a>`;
   const w = page({ html });
   const storage = await start(w, { 111: entry(["art"]) });
-  storage.data.unslopStar = { opens: 0, modalAt: 3, pages: 4, toastAt: 5 };
-  const w2 = page({ html });
-  await w2.SteamUnslop.start(storage);
+  storage.data.unslopStar = { opens: 40, modalAt: 55, pages: 3, toastAt: 5 };
+
+  const again = page({ html });
+  await again.SteamUnslop.start(storage);
+  again.document.querySelector('#t [data-tile-action="why"]').click();
+
+  assert.ok(again.document.querySelector(".unslop-star").hidden);
+});
+
+test("star toast: shown once on a page with blurred games, never again", async () => {
+  const html = `<a id="t" data-r="0,0,300,140" href="https://store.steampowered.com/app/111/"><img src="a.jpg"></a>`;
+  const w = page({ html });
+  const storage = await start(w, { 111: entry(["art"]) });
+  storage.data.unslopStar = { opens: 0, pages: 4 };
+
+  const fifthPage = page({ html });
+  await fifthPage.SteamUnslop.start(storage);
   assert.equal(storage.data.unslopStar.pages, 5);
+
   await sleep(6200);
-  const t = w2.document.querySelector(".unslop-toast");
-  assert.ok(t, "toast is shown after a short delay");
-  assert.equal(storage.data.unslopStar.toastAt, 35, "next one 30 pages later");
-  t.querySelector("[data-star-link]").click();
-  assert.ok(
-    storage.data.unslopStar.modalAt >= 75 && storage.data.unslopStar.toastAt >= 155,
-    "starring pauses both much longer",
-  );
+  const toast = fifthPage.document.querySelector(".unslop-toast");
+  assert.ok(toast, "toast is shown after a short delay");
+  assert.equal(storage.data.unslopStar.toastShown, true);
+
+  toast.querySelector("[data-star-hide]").click();
   await sleep(300);
-  assert.equal(w2.document.querySelector(".unslop-toast"), null);
+  assert.equal(fifthPage.document.querySelector(".unslop-toast"), null);
+
+  const laterPage = page({ html });
+  await laterPage.SteamUnslop.start(storage);
+  await sleep(6200);
+  assert.equal(laterPage.document.querySelector(".unslop-toast"), null, "not again");
 });
 
 test("reason dialog: close button, focus returns, text is loaded with a loading state", async () => {
@@ -375,8 +398,12 @@ test("search suggestion rows with display: contents get the overlay on their own
   assert.equal(d.querySelector("#row > .unslop-overlay"), null);
   assert.equal(d.querySelector("#box").dataset.unslopTileHost, "static");
   d.querySelector('#box [data-tile-action="show"]').click();
-  assert.equal(d.querySelector(".unslop-overlay"), null);
-  assert.equal(d.querySelector("#box").dataset.unslopTileHost, undefined);
+  assert.ok(!d.querySelector("#row").classList.contains("unslop-blur"));
+  assert.ok(
+    d.querySelector("#box > .unslop-overlay.unslop-sign"),
+    "only the small info sign stays, again on the row's box",
+  );
+  assert.equal(d.querySelectorAll(".unslop-overlay").length, 1);
 });
 
 test("search row that is laid out late or re-rendered on hover gets its overlay moved back", async () => {
@@ -498,4 +525,24 @@ test("the same game listed twice in a result list gets two full overlays", async
   await start(w, { 111: entry(["art"]), 222: noAiEntry() });
   assert.equal(overlayMode(w, "#r1"), "full");
   assert.equal(overlayMode(w, "#r3"), "full");
+});
+
+test("event cards of an AI game are no game tiles and stay sharp", async () => {
+  const w = page({
+    html:
+      '<a id="event" data-r="0,0,300,170" href="https://store.steampowered.com/newshub/app/111/view/688648135317127903">' +
+      '<img src="event.jpg"></a>' +
+      '<a id="news" data-r="0,200,300,170" href="https://store.steampowered.com/news/app/111/view/1"><img src="news.jpg"></a>',
+  });
+  await start(w, { 111: entry(["art"]) });
+  await sleep(50);
+  const d = w.document;
+
+  for (const id of ["event", "news"]) {
+    const link = d.getElementById(id);
+    assert.ok(
+      !link.classList.contains("unslop-blur") && !link.classList.contains("unslop-wait"),
+      id,
+    );
+  }
 });

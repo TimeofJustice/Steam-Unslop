@@ -15,6 +15,7 @@ import {
   tileAreaOf,
 } from "./tiles.js";
 import { SCAN_MARGIN, requestScan } from "./main.js";
+import { rememberShownGame } from "./shown.js";
 import { redrawOnRatingChange } from "./refresh.js";
 
 /* Screenshots and trailers outside of game links, e.g. the large preview of the discovery queue.
@@ -270,6 +271,7 @@ function openMediaReason(appId) {
 // "Show" on a tile or a medium reveals everything of that game on the page.
 export function revealAppId(appId) {
   revealedAppIds.add(appId);
+  rememberShownGame(appId);
 
   for (const link of document.querySelectorAll("a.unslop-blur:not([data-unslop-plain])")) {
     if (link.dataset.unslopId === appId) revealTileGroup(link);

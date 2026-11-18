@@ -8,6 +8,7 @@ docs/images/
 package-lock.json
 platforms/millennium/bun.lock
 platforms/millennium/webview/core.js
+platforms/millennium/webview/trailer-guard.js
 platforms/millennium/frontend/strings.generated.ts
 platforms/millennium/node_modules/
 platforms/millennium/.millennium/

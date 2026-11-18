@@ -17,7 +17,7 @@ const problems = [];
 const SOURCE_FILE = /\.(?:js|mjs|ts|tsx|css|html|ya?ml|toml)$|(?:^|\/)\.gitignore$/;
 const CODE_FILE = /\.(?:js|mjs|ts|tsx|css|html)$/;
 const GENERATED_FILE =
-  /^(?:dist|release)\/|platforms\/millennium\/(?:webview\/core\.js|frontend\/strings\.generated\.ts)$/;
+  /^(?:dist|release)\/|platforms\/millennium\/(?:webview\/(?:core|trailer-guard)\.js|frontend\/strings\.generated\.ts)$/;
 
 const isHandWritten = file => !GENERATED_FILE.test(file);
 

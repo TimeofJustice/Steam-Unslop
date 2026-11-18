@@ -4,7 +4,8 @@
 import { rate } from "./detection.js";
 import { texts } from "./i18n.js";
 import { ICONS } from "./render.js";
-import { levelChoicesHTML, pickedLevel, setSettings, settings } from "./settings.js";
+import { setSettings, settings } from "./settings.js";
+import { levelChoicesHTML, pickedLevel } from "./settings-dialog.js";
 import { modalHeaderHTML, nextModalId, openModal } from "./modal.js";
 import { openLevelQuiz, selectLevel } from "./quiz.js";
 import { ratingInfoHTML } from "./tiles.js";

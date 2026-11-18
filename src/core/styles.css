@@ -366,6 +366,17 @@ html[data-unslop-hold-page] body {
 .unslop-tags em[hidden] {
   display: none;
 }
+/* "Wrong rating? Report it on GitHub" at the end of the legend row. */
+.unslop-report-rating {
+  margin-left: auto;
+  color: var(--u-muted);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.unslop-report-rating:hover {
+  color: var(--u-text);
+}
 /* Wraps the rating part of the reason dialog, which is drawn again on setting changes. */
 .unslop-rating-part {
   display: contents;
@@ -732,6 +743,16 @@ html[data-unslop-page] body > *:not(.unslop-modal) {
 .unslop-dialog-body .unslop-credit a:hover {
   color: var(--u-text);
 }
+/* Inline like the rest of the line, so it sits on the same baseline; only the icon is centered. */
+.unslop-dialog-body .unslop-credit .unslop-star-hint {
+  color: var(--u-mid);
+}
+.unslop-star-hint svg {
+  width: 11px;
+  height: 11px;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
 
 /* ---------- Star reminder: dialog footer and corner toast ---------- */
 .unslop-star,
@@ -952,10 +973,23 @@ html[data-unslop-page] body > *:not(.unslop-modal) {
 .unslop-dialog .unslop-game-page blockquote {
   margin: 0;
 }
-/* With several pages, three lines at least, so short statements do not make the buttons jump
-   when turning pages. A single game needs no room to spare. */
+/* All pages share one grid cell: the stack is as high as the highest page and keeps its height
+   when turning pages, so the page buttons stay in place; only the shown page is visible. Each
+   page's box is only as high as its own content, the room left stays below it. */
+.unslop-game-stack {
+  display: grid;
+}
+.unslop-game-stack > .unslop-game-page {
+  grid-area: 1 / 1;
+  align-self: start;
+}
+.unslop-game-stack > .unslop-game-page[aria-hidden="true"] {
+  visibility: hidden;
+}
+/* Long statements scroll, so one long page does not make the dialog huge. */
 .unslop-game-pages:has(.unslop-game-nav:not([hidden])) .unslop-game-page blockquote {
-  min-height: 4.5em;
+  max-height: 12em;
+  overflow-y: auto;
 }
 .unslop-game-nav {
   display: flex;
@@ -1371,4 +1405,143 @@ html[data-unslop-page] body > *:not(.unslop-modal) {
     flex-wrap: wrap;
     padding-left: 16px;
   }
+}
+
+/* ---------- Information mode: blurring turned off ---------- */
+/* Images stay sharp; overlays become a small sign in the corner, which opens the reason, and
+   clicks on the rest of the tile reach the link. */
+html[data-unslop-no-blur]
+  :is(
+    .unslop-blur > *,
+    .unslop-blur > [data-unslop-tile-host] > *,
+    .unslop-media,
+    .unslop-gmedia,
+    .unslop-gwait,
+    .unslop-wait *,
+    .unslop-dim,
+    .unslop-hoverblur *
+  ) {
+  filter: none !important;
+  clip-path: none !important;
+}
+:is(html[data-unslop-no-blur] :is(.unslop-overlay, .unslop-mediainfo), .unslop-sign) {
+  inset: 6px auto auto 6px !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: calc(100% - 52px);
+  min-width: min(80px, calc(100% - 12px));
+  container-type: normal;
+  background: rgba(23, 26, 33, 0.88);
+  border-radius: 3px;
+}
+:is(html[data-unslop-no-blur] :is(.unslop-overlay, .unslop-mediainfo), .unslop-sign) .unslop-box {
+  flex-direction: row;
+  justify-content: flex-start;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  max-width: 100%;
+  gap: 6px;
+  padding: 3px 6px;
+}
+/* One fixed line height for everything in the sign: "normal" depends on how the system renders
+   the font, and a taller level line made the sign look uneven. */
+:is(html[data-unslop-no-blur] :is(.unslop-overlay, .unslop-mediainfo), .unslop-sign) .unslop-level {
+  flex: none;
+  line-height: 16px;
+}
+:is(html[data-unslop-no-blur] :is(.unslop-overlay, .unslop-mediainfo), .unslop-sign)
+  .unslop-level
+  b {
+  line-height: 16px;
+}
+:is(html[data-unslop-no-blur] :is(.unslop-overlay, .unslop-mediainfo), .unslop-sign) .unslop-box {
+  padding: 3px 6px;
+  line-height: 16px;
+}
+:is(html[data-unslop-no-blur] :is(.unslop-overlay, .unslop-mediainfo), .unslop-sign) .unslop-tags {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  min-width: 0;
+  overflow: hidden;
+}
+:is(html[data-unslop-no-blur] :is(.unslop-overlay, .unslop-mediainfo), .unslop-sign)
+  .unslop-tags
+  em {
+  flex: none;
+}
+/* The level is named in words; the bars would only take room from the tags. */
+:is(html[data-unslop-no-blur] :is(.unslop-overlay, .unslop-mediainfo), .unslop-sign) .unslop-meter {
+  display: none;
+}
+:is(html[data-unslop-no-blur] :is(.unslop-overlay, .unslop-mediainfo), .unslop-sign) .unslop-btns,
+html[data-unslop-no-blur] .unslop-mode-actions {
+  display: none;
+}
+
+/* ---------- Behavior switches in the settings ---------- */
+.unslop-switches {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.unslop-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: var(--u-shade);
+  border: 1px solid transparent;
+  border-radius: 2px;
+}
+.unslop-switch:hover {
+  border-color: var(--u-line);
+}
+.unslop-switch input {
+  margin: 0;
+  accent-color: var(--u-low);
+}
+
+/* ---------- News count on the Unslop button ---------- */
+.unslop-nav-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  padding: 0 4px;
+  border-radius: 8px;
+  font:
+    700 10px/16px "Motiva Sans",
+    Arial,
+    sans-serif;
+  color: #fff;
+  background: #d9774b;
+}
+.unslop-nav-count[hidden] {
+  display: none;
+}
+
+/* ---------- Wishlist overview card ---------- */
+.unslop-wishlist-card {
+  --u-font: "Motiva Sans", Arial, Helvetica, sans-serif;
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(440px, calc(100vw - 32px));
+  padding: 10px 10px 10px 14px;
+  color: #c6d4df;
+  font: 400 13px var(--u-font);
+  background: #25282e;
+  border-left: 3px solid #d9774b;
+  border-radius: 3px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+.unslop-wishlist-card .unslop-btn[hidden] {
+  display: none;
 }

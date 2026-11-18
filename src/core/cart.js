@@ -3,9 +3,10 @@
 
 import { formatText, texts } from "./i18n.js";
 import { cachedEntry, fetchRating } from "./cache.js";
-import { shouldBlur } from "./settings.js";
+import { settings, shouldBlur } from "./settings.js";
 import { modalHeaderHTML, nextModalId, openModal } from "./modal.js";
 import { appIdsOfBundles, bundleIdOf } from "./bundles.js";
+import { cartAppIds } from "./userdata.js";
 import { fillGameList, gameListHTML, sortByLevel } from "./game-list.js";
 
 /* Warns before paying for a cart with AI games. Single games come from Steam's user data
@@ -14,7 +15,6 @@ import { fillGameList, gameListHTML, sortByLevel } from "./game-list.js";
    API. The ratings are loaded when the cart opens, so the warning does not delay the click.
    Whatever fails, the purchase is never blocked: without an answer in time, the click goes
    through. */
-const USER_DATA_URL = "https://store.steampowered.com/dynamicstore/userdata/";
 const CHECK_TIMEOUT = 4000;
 
 // Recommendations and search suggestions also link to bundles, but are not in the cart.
@@ -27,12 +27,6 @@ const CHECKOUT_LABEL =
 const isCartPage = () => location.pathname.startsWith("/cart");
 
 let checkoutConfirmed = false;
-
-async function singleAppIdsInCart() {
-  const response = await fetch(`${USER_DATA_URL}?t=${Date.now()}`, { credentials: "include" });
-  const userData = await response.json();
-  return (userData.rgAppsInCart || []).map(String);
-}
 
 /* Each bundle in the cart shows its image as a link. Text links to bundles are offers such as
    "this item is also available as part of ...", which are not in the cart. */
@@ -48,7 +42,7 @@ function bundleIdsInCart() {
 
 async function appIdsInCart() {
   const [singleAppIds, bundleAppIds] = await Promise.all([
-    singleAppIdsInCart(),
+    cartAppIds(),
     appIdsOfBundles(bundleIdsInCart()).catch(() => []),
   ]);
 
@@ -120,7 +114,7 @@ function showCartWarning(cartGames, checkoutElement) {
 }
 
 async function handleCheckoutClick(event) {
-  if (checkoutConfirmed || !isCartPage()) return;
+  if (checkoutConfirmed || !isCartPage() || !settings.warnCart) return;
 
   const checkoutElement = checkoutElementOf(event.target);
   if (!checkoutElement) return;

@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.0.0
+
+- The own wishlist shows how many of its games disclose AI and lists them, checking games not
+  rated yet in the background.
+- When a game on the wishlist adds an AI disclosure or changes it, the Unslop button in the store
+  header shows a count; it opens the news first, then the settings.
+- The Chrome popup and the Millennium settings have the switches of the "Behavior" tab too.
+- Event and news cards are no longer blurred as game tiles; they show the event's own art.
+- "Placeholder voices were replaced with AI voices" no longer reads as a placeholder, and the
+  German "Sprecher" and "vertont" count as voices.
+- "Wrong rating? Report it on GitHub" in the reason dialog opens an issue form with the game,
+  its store page, the shown rating, the developer's statement and the version filled in.
+- New "Behavior" tab in the settings: blurring images, asking before a game page opens, warning
+  before paying and stopping trailers can each be turned off. With all of them off, Steam
+  Unslop works as an information mode: images stay sharp, a small sign on each tile shows the
+  level and tags and opens the reason, and nothing blocks browsing, opening or buying.
+- Trailers on the page of an AI game no longer start on their own; they play once you start
+  them yourself.
+- A game shown with "Show" stays sharp but keeps a small sign with its level and tags on its
+  image, which opens the reason. Its page opens without asking again, for five minutes.
+- The "Star on GitHub" reminder shows once and does not come back after closing it, also for
+  those who closed it before. The settings keep a small link to it.
+- The first settings tab is called "Rating", as blurring itself moved to "Behavior".
+- A language model used for translation or code no longer counts as live AI, and "unable to
+  translate by hand" no longer reads as reworked by hand. A use after "..., so ..." counts on its
+  own. Games already rated are rated again.
+
 ## 1.9.1
 
 - The bundle dialog and the cart warning no longer leave empty space below a short developer

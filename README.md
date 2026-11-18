@@ -22,7 +22,8 @@ listing.
 - **Explains the rating.** "Reason" shows the developer's own statement next to the rating.
   When the developer qualifies the use ("only as a starting point", "reworked by our team",
   "optional"), the rating is marked as uncertain and usually lowered one step.
-- **Asks before showing a game page** of an AI game.
+- **Asks before showing a game page** of an AI game, and keeps its trailers from starting on
+  their own. A game you just showed on a tile opens without asking again.
 - **Lets you choose the threshold.** "Blur from" decides which games are blurred: any
   disclosure (the default), Low and above, Medium and above, or High only. Games below the
   threshold stay visible; their game page only shows the rating below the title.
@@ -30,6 +31,9 @@ listing.
   ignoring also removes the game from the wishlist, after a second click to confirm.
 - **Warns before paying** when the cart holds AI games, with their ratings; you can go back or
   continue.
+- **Keeps an eye on your wishlist.** Your own wishlist shows how many of its games disclose AI
+  and lists them. When a game on it adds an AI disclosure or changes it, the Unslop button in the
+  store header shows a count and opens the news.
 - **Helps report undisclosed AI.** Game pages without a disclosure show "Report AI slop", which
   opens Steam's own report dialog. Steam has no report reason for AI, so you choose the reason
   and describe what you noticed.
@@ -60,6 +64,12 @@ translation or code), which then show greyed out and struck through, and a game 
 is not blurred; and games you always want to see, added with "Always show" in a
 game's dialog and listed with a search in their own tab. The level can also be set in the popup of the Chrome extension and in the
 Millennium settings. A change applies at once, in all open store tabs and windows.
+
+The "Behavior" tab turns each kind of intervention on or off: blurring images, asking before a
+game page opens, warning before paying, and stopping trailers on AI game pages. With all of them
+off, Steam Unslop only informs: images stay sharp, a small sign on each tile shows the level and
+tags and opens the reason, and nothing blocks browsing, opening or buying. The switches are
+also in the popup of the Chrome extension and in the Millennium settings.
 
 ## Installation
 
@@ -130,8 +140,9 @@ Steam Unslop reads that section and nothing else; there is no list of games and 
   in a game without a disclosure, "Report AI slop" on its page lets you tell Valve.
 - **The detection is keyword based and can be wrong**, especially with mixed or unusual
   phrasing. The dialog always shows the developer's own statement, so you can check. If you find
-  a game that is rated wrong, please open an issue with the game's name and the text of its
-  disclosure.
+  a game that is rated wrong, use "Wrong rating? Report it on GitHub" in its dialog: it opens an
+  issue form with the game, the rating and the statement already filled in, and you only add
+  what would be right.
 
 ### Privacy
 
@@ -197,14 +208,24 @@ Add `src/locales/<lang>.json` with the same keys as `en.json` and import it in
   `test/fixtures/disclosures.json` for a local regression test. The file holds the developers'
   statements, so it is gitignored and the test is skipped without it. Review the ratings once;
   after a change to the detection, `--update` re-rates them and the diff shows what moved.
+- `npm run import-reports` imports the "wrong rating" issues into `test/fixtures/reported.json`
+  (also gitignored), with the current rating and what the reporter expects. Set the right
+  `tags` and `level` and mark a report `"reviewed": true`; the corpus test then keeps it fixed.
 
 ### Releasing
 
-1. Set the new version in `package.json` and add a section for it to `CHANGELOG.md`. The build
-   writes the version into the extension manifest and `millennium.toml`.
-2. Commit, then push a tag with the same version: `git tag v1.6.0 && git push origin v1.6.0`.
+Every pull request is one version step:
+
+1. In the pull request, set the new version with `npm version <version> --no-git-tag-version`,
+   run `npm run build`, which writes it into the extension manifest and `millennium.toml`, and
+   add a section for it to `CHANGELOG.md`.
+2. Merge the pull request. The tag workflow sees the new version on `main`, tags it
+   (`v<version>`) and starts the release workflow.
 3. The release workflow runs the tests and checks, builds both packages and publishes them as a
    GitHub release with the changelog section as release notes.
+
+A push to `main` whose version is tagged already releases nothing. A tag pushed by hand still
+publishes its release.
 
 ## License
 

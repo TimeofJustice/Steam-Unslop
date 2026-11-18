@@ -66,6 +66,37 @@
     "gamePage": "Spiel {n} von {total}",
     "previousGame": "Vorheriges Spiel",
     "nextGame": "Nächstes Spiel",
+    "tabBehavior": "Verhalten",
+    "behaviorIntro": "Wähle, was Steam Unslop bei KI-Spielen tut. Ist alles aus, informiert es nur: Bewertung und Tags werden angezeigt, nichts wird blockiert.",
+    "behaviors": {
+      "blur": {
+        "label": "Bilder verschwimmen",
+        "hint": "Aus: Bilder bleiben scharf, ein kleines Schild zeigt Stufe und Tags."
+      },
+      "gatePages": {
+        "label": "Vor dem Öffnen einer Spielseite fragen",
+        "hint": "Aus: Die Seite öffnet sich direkt, mit der Bewertung unter dem Titel."
+      },
+      "warnCart": {
+        "label": "Vor dem Bezahlen warnen",
+        "hint": "Wenn KI-Spiele im Warenkorb liegen."
+      },
+      "pauseTrailers": {
+        "label": "Trailer auf KI-Spielseiten anhalten",
+        "hint": "Trailer starten erst, wenn du sie selbst abspielst."
+      }
+    },
+    "reportRating": "Bewertung falsch? Auf GitHub melden",
+    "newsTitle": "Neu auf deiner Wunschliste",
+    "newsIntro": "{n} Spiele auf deiner Wunschliste haben KI-generierte Inhalte offengelegt oder ihre Angabe ge\u00e4ndert:",
+    "newsIntroOne": "Ein Spiel auf deiner Wunschliste hat KI-generierte Inhalte offengelegt oder seine Angabe ge\u00e4ndert:",
+    "newsDone": "Verstanden",
+    "newsTip": "Steam Unslop: {n} neue KI-Offenlegungen auf deiner Wunschliste",
+    "wishlistTitle": "KI-Spiele auf deiner Wunschliste",
+    "wishlistChecking": "Steam Unslop pr\u00fcft deine Wunschliste ({n} von {total}) \u2026",
+    "wishlistSummary": "{n} von {total} Spielen auf deiner Wunschliste haben KI offengelegt.",
+    "wishlistNone": "Keines der {total} Spiele auf deiner Wunschliste hat KI offengelegt.",
+    "wishlistShow": "Anzeigen",
     "credit": "Steam Unslop {version} · von {author}",
     "why": "Grund",
     "showShort": "Anzeigen",
@@ -144,7 +175,7 @@
     "allowEmpty": "Noch keine Spiele.",
     "allowRemove": "Entfernen",
     "alwaysShow": "Immer anzeigen",
-    "tabBlur": "Verschwimmen",
+    "tabBlur": "Bewertung",
     "tabAllow": "Immer angezeigt ({n})",
     "allowIntro": "Diese Spiele werden nie verschwommen. Hinzufügen mit „Immer anzeigen“ im Fenster eines Spiels.",
     "allowSearch": "Spiele suchen",

@@ -174,3 +174,45 @@ test("tags that do not fit a low tile are summed up as +N, strongest first", asy
   const one = await tagsOf("one");
   assert.deepEqual(one.texts, ["\u00dcbersetzung"], "a single tag that fits gets no +N");
 });
+
+test("turning the pages of several games keeps the dialog height", async () => {
+  const long = "AI was used for many things. ".repeat(30);
+  const page = await storePage(
+    `<a id="pack" href="https://store.steampowered.com/bundle/500/Pack/" style="display:block;width:300px;height:140px">
+    <img style="width:300px;height:140px"></a>`,
+    {
+      cache: {
+        111: entry(["art"], { name: "Short", text: "AI art." }),
+        222: entry(["live", "art", "voice", "music", "sfx", "text", "promo"], {
+          name: "A game with a much longer name that needs more room",
+          text: long,
+        }),
+        333: entry(["transl"], { name: "Middle", text: "AI translation for some languages." }),
+      },
+      language: "de",
+      responses: {
+        "https://api.steampowered.com/IStoreBrowseService/GetItems/**": {
+          response: { store_items: [{ id: 500, name: "Pack", included_appids: [111, 222, 333] }] },
+        },
+      },
+    },
+  );
+  await page.waitForSelector("#pack .unslop-overlay");
+  await page.click('#pack [data-tile-action="why"]');
+  await page.waitForTimeout(200);
+
+  const dialogHeight = () =>
+    page.evaluate(() =>
+      Math.round(document.querySelector(".unslop-dialog").getBoundingClientRect().height),
+    );
+
+  const heights = [await dialogHeight()];
+  for (let pageNumber = 2; pageNumber <= 3; pageNumber++) {
+    await page.click("[data-page-next]");
+    heights.push(await dialogHeight());
+  }
+  await page.click("[data-page-prev]");
+  heights.push(await dialogHeight());
+
+  assert.equal(new Set(heights).size, 1, `heights ${heights}`);
+});

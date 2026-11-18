@@ -21,6 +21,12 @@
       "matches": ["https://store.steampowered.com/*"],
       "js": ["core.js", "content.js"],
       "run_at": "document_start"
+    },
+    {
+      "matches": ["https://store.steampowered.com/*"],
+      "js": ["trailer-guard.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
     }
   ]
 }

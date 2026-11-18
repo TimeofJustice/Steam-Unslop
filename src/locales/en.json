@@ -66,6 +66,34 @@
     "gamePage": "Game {n} of {total}",
     "previousGame": "Previous game",
     "nextGame": "Next game",
+    "tabBehavior": "Behavior",
+    "behaviorIntro": "Choose what Steam Unslop does with AI games. With everything off, it only informs: ratings and tags show, nothing is blocked.",
+    "behaviors": {
+      "blur": {
+        "label": "Blur images",
+        "hint": "Off: images stay sharp, a small sign shows level and tags."
+      },
+      "gatePages": {
+        "label": "Ask before a game page opens",
+        "hint": "Off: the page opens at once, with the rating below the title."
+      },
+      "warnCart": { "label": "Warn before paying", "hint": "When the cart holds AI games." },
+      "pauseTrailers": {
+        "label": "Stop trailers on AI game pages",
+        "hint": "Trailers only start when you play them yourself."
+      }
+    },
+    "reportRating": "Wrong rating? Report it on GitHub",
+    "newsTitle": "New on your wishlist",
+    "newsIntro": "{n} games on your wishlist disclosed AI-generated content or changed their disclosure:",
+    "newsIntroOne": "A game on your wishlist disclosed AI-generated content or changed its disclosure:",
+    "newsDone": "Got it",
+    "newsTip": "Steam Unslop: {n} new AI disclosures on your wishlist",
+    "wishlistTitle": "AI games on your wishlist",
+    "wishlistChecking": "Steam Unslop is checking your wishlist ({n} of {total}) ...",
+    "wishlistSummary": "{n} of {total} games on your wishlist disclose AI.",
+    "wishlistNone": "None of the {total} games on your wishlist discloses AI.",
+    "wishlistShow": "Show",
     "credit": "Steam Unslop {version} · by {author}",
     "why": "Reason",
     "showShort": "Show",
@@ -144,7 +172,7 @@
     "allowEmpty": "No games yet.",
     "allowRemove": "Remove",
     "alwaysShow": "Always show",
-    "tabBlur": "Blurring",
+    "tabBlur": "Rating",
     "tabAllow": "Always shown ({n})",
     "allowIntro": "These games are never blurred. Add one with \"Always show\" in its dialog.",
     "allowSearch": "Search games",

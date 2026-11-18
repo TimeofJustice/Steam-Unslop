@@ -1,0 +1,53 @@
+# Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+# SPDX-License-Identifier: Apache-2.0
+
+name: Tag
+
+# Every merge to main that raises the version in package.json is a release: this tags the new
+# version and publishes it. A version that already has its tag is left alone, so ordinary pushes
+# do nothing.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+# One release at a time; a second merge waits instead of tagging alongside.
+concurrency:
+  group: tag
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      created: ${{ steps.create.outputs.created }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version in package.json
+        id: version
+        run: echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Tag the version unless it is tagged already
+        id: create
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
+            echo "$TAG is tagged already."
+            echo "created=false" >> "$GITHUB_OUTPUT"
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  release:
+    needs: tag
+    if: needs.tag.outputs.created == 'true'
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
+    permissions:
+      contents: write

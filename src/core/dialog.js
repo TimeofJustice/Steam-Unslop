@@ -3,7 +3,8 @@
 
 import { texts } from "./i18n.js";
 import { levelHTML, tagsHTML, uncertaintyNoteHTML } from "./render.js";
-import { allowGame, openSettings, rateForUser, shouldBlur } from "./settings.js";
+import { allowGame, rateForUser, settings, shouldBlur } from "./settings.js";
+import { openSettings } from "./settings-dialog.js";
 import { loadDetails } from "./cache.js";
 import { handleIgnoreClick } from "./steam-api.js";
 import {
@@ -15,6 +16,8 @@ import {
 import { modalHeaderHTML, nextModalId, openModal } from "./modal.js";
 import { redrawOnRatingChange } from "./refresh.js";
 import { fillGameList, gameListHTML, sortByLevel } from "./game-list.js";
+import { wrongRatingIssueUrl } from "./issue.js";
+import { currentAppId } from "./dom.js";
 
 export const closeAction = () => ({
   label: texts.close,
@@ -55,7 +58,7 @@ function ratingPartHTML(info) {
   return `${levelHTML(rating)}<div class="unslop-tags">${tagList}</div>${uncertaintyNoteHTML(rating)}`;
 }
 
-function reasonDialogHTML(info, { titleId, intro, actions, dismissable, allowId }) {
+function reasonDialogHTML(info, { titleId, intro, actions, dismissable, allowId, reportable }) {
   const legend =
     `<em class="sev-3">${texts.levels[3]}</em>` +
     `<em class="sev-2">${texts.levels[2]}</em>` +
@@ -67,7 +70,11 @@ function reasonDialogHTML(info, { titleId, intro, actions, dismissable, allowId 
       <p>${intro}</p>
       <div class="unslop-rating-part">${ratingPartHTML(info)}</div>
       ${statementHTML(info)}
-      <div class="unslop-legend"><span class="unslop-label">${texts.legend}</span>${legend}</div>
+      <div class="unslop-legend"><span class="unslop-label">${texts.legend}</span>${legend}${
+        reportable
+          ? `<a class="unslop-report-rating" href="#" data-report-rating>${texts.reportRating}</a>`
+          : ""
+      }</div>
       <div class="unslop-actions">${actionButtonsHTML(actions, allowId)}</div>
     </div>${starBannerHTML()}</div>`;
 }
@@ -85,7 +92,24 @@ export function openReasonDialog(
 
   let subtitleElement;
 
+  // Bundles have no statement of their own; the game page dialog knows its game from the page.
+  const reportAppId = info.bundle ? null : appId || allowId || currentAppId();
+
+  const reportWrongRating = event => {
+    event.preventDefault();
+
+    const url = wrongRatingIssueUrl({
+      appId: reportAppId,
+      name: info.name || subtitleElement?.textContent || `App ${reportAppId}`,
+      info,
+      rating: rateForUser(info),
+      excludedTags: settings.ignoreTags,
+    });
+    open(url, "_blank", "noopener");
+  };
+
   const handleClick = (event, close) => {
+    if (event.target.closest("[data-report-rating]")) return reportWrongRating(event);
     if (event.target.closest("[data-star-hide]")) return dismissStarReminder("dialog");
     if (event.target.closest("[data-star-link]")) return onStarLinkClicked();
     if (event.target.closest("[data-settings]")) return openSettings();
@@ -102,7 +126,14 @@ export function openReasonDialog(
   let stopRedrawing = () => {};
 
   const close = openModal(
-    reasonDialogHTML(info, { titleId, intro, actions, dismissable, allowId }),
+    reasonDialogHTML(info, {
+      titleId,
+      intro,
+      actions,
+      dismissable,
+      allowId,
+      reportable: !!reportAppId,
+    }),
     { dismissable, onClick: handleClick, onClose: () => stopRedrawing() },
   );
 
@@ -173,7 +204,8 @@ function releasePageGate() {
 }
 
 export function releasePageGateIfAllowed() {
-  if (pageGate && !shouldBlur(pageGate.info, pageGate.appId)) releasePageGate();
+  if (!pageGate) return;
+  if (!settings.gatePages || !shouldBlur(pageGate.info, pageGate.appId)) releasePageGate();
 }
 
 function leaveGamePage() {
