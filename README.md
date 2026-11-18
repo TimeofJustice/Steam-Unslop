@@ -214,11 +214,18 @@ Add `src/locales/<lang>.json` with the same keys as `en.json` and import it in
 
 ### Releasing
 
-1. Set the new version in `package.json` and add a section for it to `CHANGELOG.md`. The build
-   writes the version into the extension manifest and `millennium.toml`.
-2. Commit, then push a tag with the same version: `git tag v1.6.0 && git push origin v1.6.0`.
+Every pull request is one version step:
+
+1. In the pull request, set the new version with `npm version <version> --no-git-tag-version`,
+   run `npm run build`, which writes it into the extension manifest and `millennium.toml`, and
+   add a section for it to `CHANGELOG.md`.
+2. Merge the pull request. The tag workflow sees the new version on `main`, tags it
+   (`v<version>`) and starts the release workflow.
 3. The release workflow runs the tests and checks, builds both packages and publishes them as a
    GitHub release with the changelog section as release notes.
+
+A push to `main` whose version is tagged already releases nothing. A tag pushed by hand still
+publishes its release.
 
 ## License
 
