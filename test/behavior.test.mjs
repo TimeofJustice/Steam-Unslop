@@ -78,32 +78,32 @@ test("showing a tile is remembered for its game page", async () => {
   assert.ok(Date.now() - shown[111] < 1000);
 });
 
-test("trailers on an AI game page only start on the user's own click", async () => {
+const trailerState = w => w.document.documentElement.dataset.unslopTrailers;
+
+test("the page of an AI game tells the trailer guard to hold its trailers", async () => {
   const w = page({ url: GAME_URL, html: `${gamePageHTML}<video id="trailer" autoplay></video>` });
   const trailer = w.document.querySelector("#trailer");
-  let pauses = 0;
-  trailer.pause = () => pauses++;
+  trailer.pause = () => {};
+
+  w.SteamUnslop.hold();
+  assert.equal(trailerState(w), "pending", "held from the start, before the rating");
 
   await startWith(w, {});
   await sleep(50);
-  assert.equal(trailer.autoplay, false);
-
-  trailer.dispatchEvent(new w.Event("play"));
-  assert.equal(pauses, 1, "a start without the user's click is stopped");
+  assert.equal(trailerState(w), "hold");
+  assert.equal(trailer.autoplay, false, "autoplay by attribute is stopped too");
 });
 
-test("trailers keep playing when stopping them is turned off", async () => {
-  const w = page({ url: GAME_URL, html: `${gamePageHTML}<video id="trailer" autoplay></video>` });
-  const trailer = w.document.querySelector("#trailer");
-  let pauses = 0;
-  trailer.pause = () => pauses++;
-
-  await startWith(w, { pauseTrailers: false });
+test("trailers are allowed when stopping them is off or the game has no disclosure", async () => {
+  const optedOut = page({ url: GAME_URL, html: gamePageHTML });
+  await startWith(optedOut, { pauseTrailers: false });
   await sleep(50);
+  assert.equal(trailerState(optedOut), "allow");
 
-  trailer.dispatchEvent(new w.Event("play"));
-  assert.equal(pauses, 0);
-  assert.equal(trailer.autoplay, true);
+  const noDisclosure = page({ url: GAME_URL, html: '<div id="appHubAppName">Game</div>' });
+  await startWith(noDisclosure, {});
+  await sleep(50);
+  assert.equal(trailerState(noDisclosure), "allow");
 });
 
 test("without the cart warning, paying goes ahead at once", async () => {

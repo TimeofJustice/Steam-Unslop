@@ -57,6 +57,18 @@ const { outputFiles } = await build({
   legalComments: "none",
 });
 
+// The trailer guard runs in the page's own JavaScript world, apart from the core.
+const { outputFiles: guardFiles } = await build({
+  entryPoints: [join(repositoryRoot, "src/guard/trailers.js")],
+  bundle: true,
+  write: false,
+  format: "iife",
+  target: "chrome110",
+  legalComments: "none",
+});
+const trailerGuard = `${LICENSE_HEADER}// Steam Unslop ${version} trailer guard, built by scripts/build.mjs from src/guard, do not edit.
+${guardFiles[0].text}`;
+
 // Loaded twice (e.g. by two wrappers), the second copy does nothing.
 const core = `${LICENSE_HEADER}// Steam Unslop ${version}, built by scripts/build.mjs from src/core, do not edit.
 // Platform wrappers call SteamUnslop.hold() early and SteamUnslop.start(storage) once the DOM is ready,
@@ -85,6 +97,7 @@ for (const fileName of ["LICENSE", "NOTICE"]) {
 }
 
 writeFile("dist/extension/core.js", core);
+writeFile("dist/extension/trailer-guard.js", trailerGuard);
 
 const iconFolder = join(repositoryRoot, "platforms/extension/icons");
 if (existsSync(iconFolder)) {
@@ -120,6 +133,7 @@ for (const [language, locale] of Object.entries(localesByLanguage)) {
 
 // Millennium plugin
 writeFile("platforms/millennium/webview/core.js", core);
+writeFile("platforms/millennium/webview/trailer-guard.js", trailerGuard);
 
 // The panel shows the behavior switches with the texts of the store's settings dialog.
 const millenniumTexts = Object.fromEntries(

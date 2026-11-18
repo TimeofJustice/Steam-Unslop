@@ -40,7 +40,7 @@ import { addReportBanner } from "./report.js";
 import { NEWS_KEY, loadNews } from "./news.js";
 import { showWishlistOverview } from "./wishlist-overview.js";
 import { wasShownRecently } from "./shown.js";
-import { holdTrailers } from "./trailers.js";
+import { decideTrailers, holdTrailersUntilRated, stopAutoplayingVideos } from "./trailers.js";
 import { preloadCartRatings, watchCheckout } from "./cart.js";
 import {
   bundleIdOf,
@@ -301,6 +301,7 @@ function hold() {
 
   if (currentAppId()) {
     root.dataset.unslopHoldPage = "";
+    holdTrailersUntilRated();
 
     // Never leave the page hidden if start() does not run.
     setTimeout(() => delete root.dataset.unslopHoldPage, 8000);
@@ -367,10 +368,12 @@ async function handleGamePage(appId, hasSessionSettings) {
   if (info) cache[appId].name = document.querySelector("#appHubAppName")?.textContent.trim() || "";
   saveCache();
 
-  if (!info) return addReportBanner();
+  const isBlurredGame = !!info && shouldBlur(info, appId);
+  const holdsTrailers = isBlurredGame && settings.pauseTrailers;
+  decideTrailers(holdsTrailers);
+  if (holdsTrailers) stopAutoplayingVideos();
 
-  const isBlurredGame = shouldBlur(info, appId);
-  if (isBlurredGame && settings.pauseTrailers) holdTrailers();
+  if (!info) return addReportBanner();
 
   // A game just shown on a tile opens without asking again.
   if (isBlurredGame && settings.gatePages && !wasShownRecently(appId)) blockGamePage(info, appId);

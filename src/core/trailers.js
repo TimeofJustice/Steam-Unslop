@@ -1,28 +1,29 @@
 // Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
-/* On the page of an AI game, trailers do not start on their own: a video only plays after the
-   user's own click. Media events do not bubble, but a capturing listener on the document still
-   sees them before the player does. */
-const startedByUser = () => !!navigator.userActivation?.isActive;
+/* Trailers on the page of an AI game do not start on their own. The holding itself is done by
+   the trailer guard (src/guard/trailers.js) in the page's own JavaScript world; the core tells it
+   through <html data-unslop-trailers> what to do: "pending" until the game is rated, then
+   "hold" or "allow". */
+const TRAILER_STATE = "unslopTrailers";
 
-function pause(video) {
-  try {
-    video.pause();
-  } catch {
-    // No media support.
-  }
+// At document_start on a game page: the store player may try to start before the rating.
+export function holdTrailersUntilRated() {
+  document.documentElement.dataset[TRAILER_STATE] = "pending";
 }
 
-function stopAutoplay(event) {
-  if (event.target instanceof HTMLVideoElement && !startedByUser()) pause(event.target);
+export function decideTrailers(hold) {
+  document.documentElement.dataset[TRAILER_STATE] = hold ? "hold" : "allow";
 }
 
-export function holdTrailers() {
-  document.addEventListener("play", stopAutoplay, true);
-
-  for (const video of document.querySelectorAll("video")) {
+// Videos that start by their autoplay attribute call no play(); they are stopped here.
+export function stopAutoplayingVideos() {
+  for (const video of document.querySelectorAll("video[autoplay]")) {
     video.autoplay = false;
-    if (!video.paused) pause(video);
+    try {
+      video.pause();
+    } catch {
+      // No media support.
+    }
   }
 }
