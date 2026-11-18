@@ -97,6 +97,8 @@
     "wishlistSummary": "{n} von {total} Spielen auf deiner Wunschliste haben KI offengelegt.",
     "wishlistNone": "Keines der {total} Spiele auf deiner Wunschliste hat KI offengelegt.",
     "wishlistShow": "Anzeigen",
+    "copyLink": "Link kopieren",
+    "linkCopied": "Kopiert",
     "credit": "Steam Unslop {version} · von {author}",
     "why": "Grund",
     "showShort": "Anzeigen",

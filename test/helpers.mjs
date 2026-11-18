@@ -48,6 +48,7 @@ export function page({
   elementFromPoint,
   io = true,
   mo = false,
+  userAgent,
 } = {}) {
   const dom = new JSDOM(`<html lang="${lang}"><body>${html}</body></html>`, {
     url,
@@ -80,6 +81,7 @@ export function page({
   if (elementFromPoint) w.document.elementFromPoint = elementFromPoint(w.document);
   for (const [k, v] of Object.entries(session)) w.sessionStorage.setItem(k, v);
   if (cookie) w.document.cookie = cookie;
+  if (userAgent) Object.defineProperty(w.navigator, "userAgent", { value: userAgent });
   w.fetch = fetch || (async () => ({ ok: false, status: 404 }));
   w.eval(CORE);
   return w;

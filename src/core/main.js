@@ -37,6 +37,7 @@ import { OLD_STAR_KEYS, STAR_KEY, countPageForStar, loadStarState } from "./star
 import { openTutorial } from "./tutorial.js";
 import { addPageBadge, blockGamePage } from "./dialog.js";
 import { addReportBanner } from "./report.js";
+import { enableCopyButtons } from "./links.js";
 import { NEWS_KEY, loadNews } from "./news.js";
 import { showWishlistOverview } from "./wishlist-overview.js";
 import { wasShownRecently } from "./shown.js";
@@ -419,6 +420,7 @@ export async function start(adapter) {
   setLanguage(steamLanguage());
   hold();
   document.addEventListener("mouseover", trackHover, true);
+  enableCopyButtons();
   watchCheckout();
 
   // The session cache is synchronous, so known games are blurred right away.

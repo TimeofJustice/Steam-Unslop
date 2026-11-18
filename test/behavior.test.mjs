@@ -216,11 +216,15 @@ test("a wrong rating can be reported on GitHub with the form filled in", async (
   await sleep(50);
   const d = w.document;
 
-  let opened;
-  w.open = url => (opened = new URL(url));
+  // jsdom does not navigate; the link is checked instead.
+  d.addEventListener("click", event => event.preventDefault());
 
   d.querySelector('#t [data-tile-action="why"]').click();
-  d.querySelector(".unslop-dialog [data-report-rating]").click();
+  const link = d.querySelector(".unslop-dialog [data-report-rating]");
+  link.click();
+
+  assert.equal(link.target, "_blank");
+  const opened = new URL(link.href);
 
   assert.equal(
     opened.origin + opened.pathname,
@@ -233,6 +237,43 @@ test("a wrong rating can be reported on GitHub with the form filled in", async (
   assert.match(field("shown-rating"), /^(Low|Medium|High): Art, Translation$/);
   assert.equal(field("statement"), "AI art and AI translation.");
   assert.match(field("version"), /^\d+\.\d+\.\d+$/);
+});
+
+test("links to GitHub open in the browser from the Steam client and can be copied", async () => {
+  const w = page({
+    html: tile,
+    userAgent: "Mozilla/5.0 Valve Steam Client",
+  });
+  await start(w, { 111: entry(["art"], { name: "AI Game", text: "AI art." }) });
+  await sleep(50);
+  const d = w.document;
+
+  let copied;
+  Object.defineProperty(w.navigator, "clipboard", {
+    value: { writeText: async text => (copied = text) },
+  });
+
+  d.querySelector('#t [data-tile-action="why"]').click();
+  const link = d.querySelector(".unslop-dialog [data-report-rating]");
+  const issueUrl = "https://github.com/TimeofJustice/Steam-Unslop/issues/new?";
+  assert.ok(link.href.startsWith(`steam://openurl_external/${issueUrl}`), link.href);
+
+  const copyButton = link.nextElementSibling;
+  assert.ok(copyButton.matches("[data-copy-link]"));
+  copyButton.click();
+  await sleep(10);
+  assert.ok(copied?.startsWith(issueUrl), copied);
+  assert.ok(copyButton.classList.contains("unslop-copied"));
+  assert.ok(d.querySelector(".unslop-dialog"), "copying keeps the dialog open");
+});
+
+test("links to GitHub stay plain in a normal browser", async () => {
+  const w = page({ html: tile });
+  await start(w, { 111: entry(["art"], { name: "AI Game", text: "AI art." }) });
+  await sleep(50);
+  w.document.querySelector('#t [data-tile-action="why"]').click();
+  const link = w.document.querySelector(".unslop-dialog [data-report-rating]");
+  assert.ok(link.href.startsWith("https://github.com/"), link.href);
 });
 
 test("the issue form matches the fields the dialog fills in", async () => {

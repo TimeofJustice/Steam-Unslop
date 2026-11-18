@@ -94,6 +94,8 @@
     "wishlistSummary": "{n} of {total} games on your wishlist disclose AI.",
     "wishlistNone": "None of the {total} games on your wishlist discloses AI.",
     "wishlistShow": "Show",
+    "copyLink": "Copy link",
+    "linkCopied": "Copied",
     "credit": "Steam Unslop {version} · by {author}",
     "why": "Reason",
     "showShort": "Show",

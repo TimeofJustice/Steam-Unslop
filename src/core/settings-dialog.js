@@ -8,6 +8,7 @@ import { modalHeaderHTML, nextModalId, openModal } from "./modal.js";
 import { openLevelQuiz, selectLevel } from "./quiz.js";
 import { starSettingsLinkHTML } from "./star.js";
 import { AUTHOR_NAME, AUTHOR_URL, VERSION } from "./project.js";
+import { externalLinkHTML } from "./links.js";
 import { BEHAVIORS, setSettings, settings } from "./settings.js";
 
 // The settings dialog, opened by the header button and the gear of every dialog; the settings
@@ -89,7 +90,7 @@ function renderAllowedGames(root, allowedGames, query) {
 
 // Which version is running and who made it, below the dialog buttons.
 function creditHTML() {
-  const authorLink = `<a href="${AUTHOR_URL}" target="_blank" rel="noopener">${AUTHOR_NAME}</a>`;
+  const authorLink = externalLinkHTML(AUTHOR_URL, AUTHOR_NAME);
   const credit = formatText(texts.credit, { version: VERSION, author: authorLink });
 
   return `<p class="unslop-credit">${credit} \u00b7 ${starSettingsLinkHTML()}</p>`;

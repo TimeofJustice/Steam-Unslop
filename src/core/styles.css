@@ -366,16 +366,38 @@ html[data-unslop-hold-page] body {
 .unslop-tags em[hidden] {
   display: none;
 }
-/* "Wrong rating? Report it on GitHub" at the end of the legend row. */
+/* "Wrong rating? Report it on GitHub" at the end of the legend row, with its copy button. */
 .unslop-report-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   margin-left: auto;
+}
+.unslop-report-rating a {
   color: var(--u-muted);
   font-size: 12px;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.unslop-report-rating:hover {
+.unslop-report-rating a:hover {
   color: var(--u-text);
+}
+/* Copies the address of the link before it. */
+.unslop-copy {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+.unslop-copy svg {
+  width: 12px;
+  height: 12px;
+}
+.unslop-star-hint + .unslop-copy,
+.unslop-credit a + .unslop-copy {
+  margin-left: 4px;
+}
+.unslop-copy.unslop-copied {
+  color: var(--u-low);
 }
 /* Wraps the rating part of the reason dialog, which is drawn again on setting changes. */
 .unslop-rating-part {

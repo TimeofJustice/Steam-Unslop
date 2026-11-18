@@ -5,6 +5,7 @@ import { texts } from "./i18n.js";
 import { ICONS, closeButtonHTML } from "./render.js";
 import { storage } from "./cache.js";
 import { REPOSITORY_URL } from "./project.js";
+import { copyButtonHTML, externalLinkHTML } from "./links.js";
 
 /* "Star on GitHub" reminder, asked for once:
    - in dialogs from the FIRST_DIALOG-th one on, until it is closed or its link is used;
@@ -25,8 +26,11 @@ let dialogsOpenedBeforeLoad = 0;
 let pageCounted = false;
 
 const starLinkHTML = () =>
-  `<a class="unslop-btn unslop-btn-primary" href="${REPOSITORY_URL}" target="_blank" rel="noopener" data-star-link>` +
-  `${ICONS.star}<span>${texts.starLink}</span></a>`;
+  externalLinkHTML(
+    REPOSITORY_URL,
+    `${ICONS.star}<span>${texts.starLink}</span>`,
+    'class="unslop-btn unslop-btn-primary" data-star-link',
+  ) + copyButtonHTML();
 
 const starContentHTML = () =>
   `<span class="unslop-star-text">${texts.starText}</span>${starLinkHTML()}` +
@@ -34,7 +38,11 @@ const starContentHTML = () =>
 
 // The small link in the settings, always there.
 export const starSettingsLinkHTML = () =>
-  `<a class="unslop-star-hint" href="${REPOSITORY_URL}" target="_blank" rel="noopener">${ICONS.star}<span>${texts.starLink}</span></a>`;
+  externalLinkHTML(
+    REPOSITORY_URL,
+    `${ICONS.star}<span>${texts.starLink}</span>`,
+    'class="unslop-star-hint"',
+  ) + copyButtonHTML();
 
 const bannerIsDue = () => !!starState && !starState.done && starState.dialogsOpened >= FIRST_DIALOG;
 

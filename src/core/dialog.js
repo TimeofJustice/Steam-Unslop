@@ -17,6 +17,7 @@ import { modalHeaderHTML, nextModalId, openModal } from "./modal.js";
 import { redrawOnRatingChange } from "./refresh.js";
 import { fillGameList, gameListHTML, sortByLevel } from "./game-list.js";
 import { wrongRatingIssueUrl } from "./issue.js";
+import { copyButtonHTML, externalUrl } from "./links.js";
 import { currentAppId } from "./dom.js";
 
 export const closeAction = () => ({
@@ -72,7 +73,7 @@ function reasonDialogHTML(info, { titleId, intro, actions, dismissable, allowId,
       ${statementHTML(info)}
       <div class="unslop-legend"><span class="unslop-label">${texts.legend}</span>${legend}${
         reportable
-          ? `<a class="unslop-report-rating" href="#" data-report-rating>${texts.reportRating}</a>`
+          ? `<span class="unslop-report-rating"><a href="#" target="_blank" rel="noopener" data-report-rating>${texts.reportRating}</a>${copyButtonHTML()}</span>`
           : ""
       }</div>
       <div class="unslop-actions">${actionButtonsHTML(actions, allowId)}</div>
@@ -95,9 +96,9 @@ export function openReasonDialog(
   // Bundles have no statement of their own; the game page dialog knows its game from the page.
   const reportAppId = info.bundle ? null : appId || allowId || currentAppId();
 
-  const reportWrongRating = event => {
-    event.preventDefault();
-
+  // A real link; the statement may load after the dialog opened, so its address is built when
+  // the link is used: on hover, focus, click and before copying.
+  const refreshReportLink = link => {
     const url = wrongRatingIssueUrl({
       appId: reportAppId,
       name: info.name || subtitleElement?.textContent || `App ${reportAppId}`,
@@ -105,11 +106,12 @@ export function openReasonDialog(
       rating: rateForUser(info),
       excludedTags: settings.ignoreTags,
     });
-    open(url, "_blank", "noopener");
+    link.href = externalUrl(url);
   };
 
   const handleClick = (event, close) => {
-    if (event.target.closest("[data-report-rating]")) return reportWrongRating(event);
+    const reportLink = event.target.closest("[data-report-rating]");
+    if (reportLink) return refreshReportLink(reportLink);
     if (event.target.closest("[data-star-hide]")) return dismissStarReminder("dialog");
     if (event.target.closest("[data-star-link]")) return onStarLinkClicked();
     if (event.target.closest("[data-settings]")) return openSettings();
@@ -139,6 +141,14 @@ export function openReasonDialog(
 
   const modal = document.getElementById(titleId).closest(".unslop-modal");
   modal.querySelector(".unslop-dialog-title").textContent = title;
+
+  const reportLink = modal.querySelector("[data-report-rating]");
+  if (reportLink) {
+    refreshReportLink(reportLink);
+    for (const type of ["pointerenter", "focus", "unslop-refresh-link"]) {
+      reportLink.addEventListener(type, () => refreshReportLink(reportLink));
+    }
+  }
 
   const ratingPart = modal.querySelector(".unslop-rating-part");
   let redrawGameList = () => {};

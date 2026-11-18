@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.1
+
+- Links to GitHub (report a wrong rating, star the project, the author) are real links. In the
+  Steam client they open in your own browser instead of a Steam window.
+- A small button next to each of them copies the link.
+
 ## 2.0.0
 
 - The own wishlist shows how many of its games disclose AI and lists them, checking games not
