@@ -56,12 +56,37 @@
         font-size: 12px;
         color: #8f98a0;
       }
+      h2 {
+        margin: 16px 0 6px;
+        font-size: 10px;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #7a8c99;
+      }
+      .behavior {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 6px;
+        font-size: 13px;
+        text-transform: none;
+        letter-spacing: 0;
+        color: #c6d4df;
+        cursor: pointer;
+      }
+      .behavior input {
+        margin: 0;
+        accent-color: #67c1f5;
+      }
     </style>
   </head>
   <body>
     <h1 data-i18n="extName"></h1>
     <label for="min-level" data-i18n="minLevel"></label>
     <select id="min-level"></select>
+    <h2 data-i18n="behaviorTitle"></h2>
+    <div id="behaviors"></div>
     <p data-i18n="settingsHint"></p>
     <script src="popup.js"></script>
   </body>

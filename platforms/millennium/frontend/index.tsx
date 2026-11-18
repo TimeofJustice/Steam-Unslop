@@ -1,7 +1,7 @@
 // Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
-import { definePlugin, DropdownItem, Field, pluginConfig } from "millennium";
+import { definePlugin, DropdownItem, Field, pluginConfig, ToggleField } from "millennium";
 import { useEffect, useState } from "react";
 import { STRINGS } from "./strings.generated";
 
@@ -13,7 +13,13 @@ const CONFIG_KEY = "settings";
 const clientLanguage = (document.documentElement.lang || navigator.language || "").toLowerCase();
 const texts = STRINGS[clientLanguage.startsWith("de") ? "de" : "en"];
 
-type Settings = { minLevel?: number; ignoreTags?: string[]; allow?: unknown[] };
+// Same names as BEHAVIORS in src/core/settings.js; each is on unless it was turned off.
+const BEHAVIORS = ["blur", "gatePages", "warnCart", "pauseTrailers"] as const;
+type Behavior = (typeof BEHAVIORS)[number];
+
+type Settings = { minLevel?: number; ignoreTags?: string[]; allow?: unknown[] } & Partial<
+  Record<Behavior, boolean>
+>;
 
 function SettingsPanel() {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -27,8 +33,9 @@ function SettingsPanel() {
 
   if (!settings) return null;
 
-  const setMinLevel = (minLevel: number) => {
-    const nextSettings = { ...settings, minLevel };
+  // The other settings (exceptions, always shown games) are kept.
+  const saveChange = (change: Settings) => {
+    const nextSettings = { ...settings, ...change };
     setSettings(nextSettings);
     pluginConfig.set(PLUGIN_NAME, CONFIG_KEY, nextSettings);
   };
@@ -42,8 +49,18 @@ function SettingsPanel() {
         description={texts.minLevelHint}
         rgOptions={levelOptions}
         selectedOption={settings.minLevel ?? 0}
-        onChange={option => setMinLevel(option.data)}
+        onChange={option => saveChange({ minLevel: option.data })}
       />
+      <Field label={texts.behaviorTitle} />
+      {BEHAVIORS.map(behavior => (
+        <ToggleField
+          key={behavior}
+          label={texts.behaviors[behavior].label}
+          description={texts.behaviors[behavior].hint}
+          checked={settings[behavior] !== false}
+          onChange={checked => saveChange({ [behavior]: checked })}
+        />
+      ))}
       <Field label={texts.description} />
     </>
   );

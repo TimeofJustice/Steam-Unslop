@@ -52,10 +52,21 @@ const storePageUrl = appId => `https://store.steampowered.com/app/${appId}/`;
    2: every store language. 3: since 1.6.1, older entries may carry ratings of earlier builds.
    4: uses named after an exception ("no AI except for the voices"), assets replaced by people.
    5: human work described with adjectives ("made by our talented team").
-   6: dialogue or voices of live AI count as live AI only. */
-export const ENTRY_VERSION = 6;
+   6: dialogue or voices of live AI count as live AI only.
+   7: language models for translation or code, "unable to ... by hand", "..., so ...",
+      placeholders replaced with AI, German voice actors ("Sprecher", "vertont"). */
+export const ENTRY_VERSION = 7;
 
 const hintKeysOf = info => findHints(info.text, info.tags).map(hint => hint.key);
+
+// A short fingerprint of the statement, so a changed disclosure is noticed without storing it.
+function fingerprintOf(text) {
+  let hash = 5381;
+  for (let index = 0; index < text.length; index++) {
+    hash = ((hash << 5) + hash + text.charCodeAt(index)) | 0;
+  }
+  return (hash >>> 0).toString(36);
+}
 
 export function toEntry(info) {
   return {
@@ -63,10 +74,15 @@ export function toEntry(info) {
     tags: info?.tags || [],
     hints: info ? hintKeysOf(info) : [],
     text: info?.text || "",
+    ...(info && { fp: fingerprintOf(info.text || "") }),
     t: Date.now(),
     v: ENTRY_VERSION,
   };
 }
+
+// Called with { appId, previousEntry, entry } whenever a game is rated from its store page.
+const ratingListeners = new Set();
+export const onRatingChanged = listener => ratingListeners.add(listener);
 
 /* Stored entries keep the rating (tags and hint keys) but not the statement text, which is
    long and only needed by the reason dialog; it loads the text again on demand. */
@@ -77,6 +93,7 @@ function storedFormOf(entry) {
     ai: true,
     tags: entry.tags,
     hints: entry.hints ?? hintKeysOf(entry),
+    fp: entry.fp,
     name: entry.name,
     ignored: entry.ignored,
     t: entry.t,
@@ -254,6 +271,7 @@ function runRequest(request) {
       }
 
       saveCache();
+      ratingListeners.forEach(listener => listener({ appId: request.appId, previousEntry, entry }));
       request.resolve(entry.ai ? entry : null);
     })
     .catch(failure => handleFailedRequest(request, failure))

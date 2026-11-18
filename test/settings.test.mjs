@@ -298,7 +298,11 @@ test("the settings show the running version and who made Steam Unslop", async ()
 
   const { version } = JSON.parse(readFileSync("package.json", "utf8"));
   const credit = settingsDialog(w).querySelector(".unslop-credit");
-  assert.equal(credit.textContent, `Steam Unslop ${version} \u00b7 by TimeofJustice`);
+  assert.equal(
+    credit.textContent,
+    `Steam Unslop ${version} \u00b7 by TimeofJustice \u00b7 Star on GitHub`,
+  );
+  assert.ok(credit.querySelector(".unslop-star-hint"), "the star link is always there");
   assert.equal(credit.querySelector("a").href, "https://github.com/TimeofJustice");
 });
 

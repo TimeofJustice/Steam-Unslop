@@ -1,7 +1,9 @@
 // Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
 // SPDX-License-Identifier: Apache-2.0
 
-export const appIdOf = link => link.href?.match(/\/app\/(\d+)/)?.[1];
+// Links to a game. Event and news links (/newshub/app/<id>/view/...) show the event's own art,
+// not the game's, so they are no game tiles.
+export const appIdOf = link => link.href?.match(/(?<!\/news|\/newshub)\/app\/(\d+)/)?.[1];
 
 export const currentAppId = () => location.pathname.match(/^\/app\/(\d+)/)?.[1];
 

@@ -3,7 +3,7 @@
 
 import { tagLabel, texts } from "./i18n.js";
 import { compactLevelHTML, hintListText, sortBySeverity, tagsHTML } from "./render.js";
-import { addClass, appIdOf, areaOf, removeClass } from "./dom.js";
+import { MEDIA_SELECTOR, addClass, appIdOf, areaOf, isGameMedia, removeClass } from "./dom.js";
 import { storage } from "./cache.js";
 import { handleIgnoreClick } from "./steam-api.js";
 import { closeAction, openReasonDialog } from "./dialog.js";
@@ -187,6 +187,7 @@ export function unblurTile(link) {
 
   removeClass(link, "unslop-blur", "unslop-wait");
   overlayOf(link)?.remove();
+  removeInfoSign(link);
 
   if (link._unslopHost) {
     delete link._unslopHost.dataset.unslopTileHost;
@@ -334,7 +335,8 @@ export function arrangeOverlays(mainLink, onlyIfChanged) {
 }
 
 /* Tags in one line (low tiles, flat rows) that do not fit: the last ones are hidden and "+N"
-   stands in for them, with their names as tooltip. At least one tag stays. */
+   stands in for them, with their names as tooltip. The strongest tag stays as long as it fits;
+   in the smallest signs "+N" stands alone. */
 function fitTags(tagList) {
   tagList.querySelector(".unslop-more")?.remove();
   const tags = [...tagList.children];
@@ -347,7 +349,7 @@ function fitTags(tagList) {
   more.className = "unslop-more sev-0";
   tagList.append(more);
 
-  for (let hiddenCount = 1; hiddenCount < tags.length; hiddenCount++) {
+  for (let hiddenCount = 1; hiddenCount <= tags.length; hiddenCount++) {
     const hiddenTags = tags.slice(-hiddenCount);
     tags.forEach(tag => (tag.hidden = hiddenTags.includes(tag)));
 
@@ -393,13 +395,14 @@ function overlayTooltip(info, rating) {
   return `${texts.usedFor}: ${usedFor}${uncertainty}\n${texts.clickTip}`;
 }
 
-function addOverlay(target, mainLink, mode) {
+// isSign: the small info sign of a shown game instead of the blurred tile's overlay.
+function addOverlay(target, mainLink, mode, isSign = false, host = overlayHostOf(target)) {
   const info = mainLink._unslopInfo;
   const appId = mainLink.dataset.unslopId;
   const rating = rateForUser(info);
 
   const overlay = document.createElement("div");
-  overlay.className = `unslop-overlay unslop-mode-${mode}`;
+  overlay.className = `unslop-overlay unslop-mode-${mode}${isSign ? " unslop-sign" : ""}`;
   overlay.title = overlayTooltip(info, rating);
 
   const infoPart = mode !== "actions" ? ratingInfoHTML(rating, info.tags) : "";
@@ -430,14 +433,94 @@ function addOverlay(target, mainLink, mode) {
     true,
   );
 
-  overlayHostOf(target).appendChild(overlay);
+  host.appendChild(overlay);
   fitTagsOnResize(overlay);
+  return overlay;
 }
 
-// Rebuilds the overlays, e.g. after the excluded kinds of use changed.
+/* A game shown with "Show" stays sharp but keeps a small sign with its level and tags, which
+   opens the reason; the rest of the tile works as a normal link again. */
+// The sign sits on the largest image, so in a list row it covers the capsule, not the title.
+/* A shown game's card: the largest area around the link that shows no other game, such as a
+   hover card with its capsule, trailer and screenshots, which may be links of their own. */
+function shownCardOf(link) {
+  const appId = link.dataset.unslopId;
+  let card = link;
+  let twins = [link];
+
+  let root = link.parentElement;
+  for (let depth = 0; root && root !== document.body && depth < 4; depth++) {
+    if (linksOtherGame(root, appId)) break;
+
+    card = root;
+    twins = [...root.querySelectorAll("a[data-unslop-shown]")].filter(
+      other => other.dataset.unslopId === appId,
+    );
+    root = root.parentElement;
+  }
+  return { card, twins: twins.includes(link) ? twins : [link] };
+}
+
+/* The sign sits on the card's largest image, video or background image: in a list row on the
+   capsule rather than the title, on an opened hover card on its trailer or screenshot. */
+function signHostOf(card, link) {
+  const media = [...card.querySelectorAll(MEDIA_SELECTOR)].filter(
+    element =>
+      areaOf(element) > 0 &&
+      isGameMedia(element) &&
+      !element.closest(".unslop-overlay, .unslop-modal"),
+  );
+  const largest = media.sort((first, second) => areaOf(second) - areaOf(first))[0];
+  if (!largest) return overlayHostOf(link);
+
+  // An image or video cannot hold the sign, its box can; a background image's element can.
+  return /^(?:IMG|VIDEO)$/.test(largest.tagName) ? largest.parentElement : largest;
+}
+
+const makePositioned = host => {
+  if (/^(?:static)?$/.test(getComputedStyle(host).position)) host.dataset.unslopHost = "1";
+};
+
+// One sign per card, kept by its first shown link; it moves when a larger image has appeared.
+export function addInfoSign(link) {
+  if (!link._unslopInfo) return;
+
+  const { card, twins } = shownCardOf(link);
+  if (twins[0] !== link) return removeInfoSign(link);
+
+  const host = signHostOf(card, link);
+  const sign = link._unslopSign;
+
+  if (sign?.isConnected) {
+    if (sign.parentElement === host) return;
+    makePositioned(host);
+    host.appendChild(sign);
+    return;
+  }
+
+  makePositioned(host);
+  link._unslopSign = addOverlay(link, link, "info", true, host);
+}
+
+export function removeInfoSign(link) {
+  link._unslopSign?.remove();
+  link._unslopSign = null;
+  link.querySelectorAll(".unslop-sign").forEach(sign => sign.remove());
+}
+// Hovering opens a card and changes its largest image, so its links place the sign again.
+export function placeInfoSigns(link) {
+  for (const twin of shownCardOf(link).twins) addInfoSign(twin);
+}
+
+// Rebuilds the overlays and signs, e.g. after the excluded kinds of use changed.
 export function refreshOverlays() {
   for (const link of document.querySelectorAll("a.unslop-blur:not([data-unslop-plain])")) {
     if (link._unslopInfo) arrangeOverlays(link);
+  }
+
+  for (const link of document.querySelectorAll("a[data-unslop-shown]")) {
+    removeInfoSign(link);
+    addInfoSign(link);
   }
 }
 
@@ -452,6 +535,7 @@ export function revealTileGroup(mainLink) {
     link.dataset.unslopShown = "1";
   }
   mainLink._unslopPlain = null;
+  addInfoSign(mainLink);
 
   const appId = mainLink.dataset.unslopId;
   if (appId && !revealedAppIds.has(appId)) revealAppId(appId);

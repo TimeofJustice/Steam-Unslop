@@ -54,12 +54,17 @@ test("a bundle with an AI game is blurred and sums up the AI use of its games", 
 
   d.querySelector('#pack [data-tile-action="why"]').click();
   const pages = d.querySelector(".unslop-dialog .unslop-game-pages");
-  const shownPage = () =>
-    `${pages.querySelector(".unslop-game-name").textContent}: ` +
-    [...pages.querySelectorAll(".unslop-game-rating .unslop-tags em")]
-      .map(tag => tag.textContent)
-      .join(", ") +
-    ` | ${pages.querySelector("blockquote").textContent}`;
+  // All pages are in the dialog; the shown one is the page not hidden from view.
+  const shownPage = () => {
+    const shown = pages.querySelector('.unslop-game-page[aria-hidden="false"]');
+    return (
+      `${shown.querySelector(".unslop-game-name").textContent}: ` +
+      [...shown.querySelectorAll(".unslop-game-rating .unslop-tags em")]
+        .map(tag => tag.textContent)
+        .join(", ") +
+      ` | ${shown.querySelector("blockquote").textContent}`
+    );
+  };
 
   // One page per AI game, the higher rated (art, Medium) before the lower (voices).
   assert.equal(pages.querySelector(".unslop-game-count").textContent, "Game 1 of 2");

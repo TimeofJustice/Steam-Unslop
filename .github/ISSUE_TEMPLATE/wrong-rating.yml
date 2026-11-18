@@ -1,0 +1,56 @@
+# Copyright 2026 Jonas Oelschner (TimeofJustice). Part of Steam Unslop, https://github.com/TimeofJustice/Steam-Unslop
+# SPDX-License-Identifier: Apache-2.0
+
+# Opened from "Wrong rating? Report it on GitHub" in the reason dialog, which fills in the
+# fields below through the URL (game, store-page, shown-rating, statement, version).
+name: Wrong rating
+description: A game is rated wrong, or a kind of AI use is missing or too much.
+title: "Wrong rating: "
+labels: ["wrong rating"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping to improve the detection. Steam Unslop rates the developer's own AI disclosure on the store page, so the statement below is what matters most.
+  - type: input
+    id: game
+    attributes:
+      label: Game
+      placeholder: Name of the game
+    validations:
+      required: true
+  - type: input
+    id: store-page
+    attributes:
+      label: Store page
+      placeholder: https://store.steampowered.com/app/...
+    validations:
+      required: true
+  - type: input
+    id: shown-rating
+    attributes:
+      label: Rating shown by Steam Unslop
+      description: 'Level and tags, e.g. "Medium: Art, Translation".'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What would be right?
+      description: The level or tags you expected, and why.
+      placeholder: 'e.g. "Low: only translation. The art is described as made by the team."'
+    validations:
+      required: true
+  - type: textarea
+    id: statement
+    attributes:
+      label: Developer's statement
+      description: The text of the AI disclosure on the store page.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Steam Unslop version
+      placeholder: e.g. 2.0.0

@@ -19,10 +19,17 @@ export async function storePage(
     settings = { minLevel: 0 },
     viewport = { width: 1000, height: 800 },
     language = "en",
+    // Answers for requests to Steam: { "url pattern": json }.
+    responses = {},
   } = {},
 ) {
   browser ||= await chromium.launch();
   const page = await browser.newPage({ viewport, reducedMotion: "reduce" });
+  for (const [pattern, json] of Object.entries(responses)) {
+    await page.route(pattern, route =>
+      route.fulfill({ contentType: "application/json", body: JSON.stringify(json) }),
+    );
+  }
   await page.route("https://store.steampowered.com/test", r =>
     r.fulfill({
       contentType: "text/html",

@@ -203,7 +203,9 @@ await row.locator('[data-tile-action="show"]').click();
 await recordFrames(1800);
 frames.at(-1).delay = 1500;
 
-// 4. Game page gate and the badge after confirming.
+// 4. Game page gate and the badge after confirming. The walkthrough showed this game, which
+// would let its page open without asking for a few minutes, so that is forgotten first.
+await page.evaluate(() => localStorage.removeItem("unslopShown"));
 await openStorePage(`https://store.steampowered.com/app/${appId}/`);
 await page.waitForSelector(".unslop-modal[open]");
 await page.waitForTimeout(1500);

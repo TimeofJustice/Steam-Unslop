@@ -48,8 +48,6 @@ export const TAGS = [
       "dynamically generated",
       "generated (?:live|during|at runtime)",
       "in[- ]game generat\\w*",
-      "llms?",
-      "large language models?",
       "while (?:you|the player|players) plays?",
       "connects? to (?:an? )?(?:external |third[- ]party )\\w*",
       "ai[- ](?:npcs?|companions?|chat\\w*)",
@@ -120,6 +118,8 @@ export const TAGS = [
       "dubbing",
       "speech",
       "stimmen?",
+      "sprecher\\w*",
+      "vertont\\w*",
       "sprachausgabe",
       "vertonung",
       "synchronisation",
@@ -207,7 +207,8 @@ export const TAGS = [
     severity: 1,
     pattern: wholeWords([
       "concepts?",
-      "placeholders?",
+      // Placeholders replaced with AI are no AI placeholders.
+      "placeholders?(?![^.]*\\breplaced (?:with|by) (?:ai|generat))",
       "prototyp\\w*",
       "(?<!(?:with|in) )references?(?! to)",
       "inspiration",
@@ -216,7 +217,7 @@ export const TAGS = [
       "ideation",
       "mood ?boards?",
       "konzept\\w*",
-      "platzhalter",
+      "platzhalter(?![^.]*durch ki)",
       "ideen?",
     ]),
   },
@@ -243,7 +244,7 @@ export const TAGS = [
 export const TAG_BY_KEY = Object.fromEntries(TAGS.map(t => [t.key, t]));
 
 const CLAUSE_SPLIT =
-  /[.!?;:]+(?:\s+|$)|[\u3002\uff01\uff1f\uff1b]+|\n|,?\s+(?:but|however|although|whereas|aber|jedoch|sondern|allerdings)\s+/i;
+  /[.!?;:]+(?:\s+|$)|[\u3002\uff01\uff1f\uff1b]+|\n|,?\s+(?:but|however|although|whereas|aber|jedoch|sondern|allerdings)\s+|,\s+(?:so|therefore|thus|daher|deshalb)\s+/i;
 const NEGATION = wholeWords([
   "not(?! only| just)",
   "\\w+n't",
@@ -317,7 +318,9 @@ const HINTS = [
       "repainted",
       "painted over",
       "modified",
-      "by (?:our |the )?(?:(?:art|human|development|design)(?: and \\w+)? )?(?:teams?|artists?|humans?|hand)",
+      // Not after "unable to translate by hand", which says the opposite.
+      "(?<!(?:unable to|not able to|couldn't|could not|cannot|can't) \\w+ )" +
+        "by (?:our |the )?(?:(?:art|human|development|design)(?: and \\w+)? )?(?:teams?|artists?|humans?|hand)",
       "human \\w+",
       "hand[- ](?:drawn|painted|made|crafted)",
       "ueberarbeitet",
@@ -353,14 +356,15 @@ const HINTS = [
       "provisional\\w*",
       "preliminary",
       "temporar\\w*",
-      "placeholders?",
+      // Not "placeholder voices were replaced with AI voices": there AI is the final result.
+      "placeholders?(?![^.]*\\breplaced (?:with|by) (?:ai|generat))",
       "(?:will|to) be replaced",
       // Replaced by people, not "replaced with AI voices".
       "replaced(?: \\S+){0,6}? (?:by|with) (?:our |the |a |real |professional |final )*" +
         "(?:art(?:ists?)?|teams?|humans?|people|developers?|designers?|illustrators?|actors?|hand)",
       "vorlaeufig\\w*",
       "uebergangsweise",
-      "platzhalter",
+      "platzhalter(?![^.]*durch ki)",
       "(?:wird|werden) ersetzt",
       "(?:von|durch) (?:\\S+ ){0,4}?(?!ki-)(?:\\S+-)?(?:team|kuenstler\\w*|menschen|entwickler\\w*|sprecher\\w*) ersetzt",
     ]),
@@ -629,14 +633,23 @@ const SENTENCE_SPLIT =
 
 // The tags of a clause. Live AI also counts in conditional clauses ("if you ask an NPC, an LLM
 // answers"), the other tags only in actual use.
+/* A language model is live AI only when its sentence is about dialogue or voices ("NPCs talk
+   through an LLM"). Translating or coding with an LLM happens during development. */
+const LANGUAGE_MODEL = wholeWords(["llms?", "large language models?"]);
+
 function tagsOfClause(clause) {
   const usage = joinForMatching([clause]);
   const isHypothetical = HYPOTHETICAL.test(clause);
 
   const clauseTags = TAGS.filter(
     tag => (tag.key === "live" || !isHypothetical) && matchesTag(tag, usage),
-  );
-  return clauseTags.map(tag => tag.key);
+  ).map(tag => tag.key);
+
+  const onlyAboutDialogue = clauseTags.every(key => PART_OF_LIVE_AI.includes(key));
+  if (!clauseTags.includes("live") && LANGUAGE_MODEL.test(usage) && onlyAboutDialogue) {
+    clauseTags.unshift("live");
+  }
+  return clauseTags;
 }
 
 // The tags of each sentence, from its clauses that describe a use.

@@ -4,7 +4,13 @@
 import STYLES from "./styles.css";
 import { TAGS, analyze, levelOf, rate } from "./detection.js";
 import { setLanguage, steamLanguage } from "./i18n.js";
-import { SETTINGS_KEY, loadSessionSettings, setSettings, shouldBlur } from "./settings.js";
+import {
+  SETTINGS_KEY,
+  loadSessionSettings,
+  setSettings,
+  settings,
+  shouldBlur,
+} from "./settings.js";
 import { addClass, appIdOf, currentAppId, removeClass, restoreClasses } from "./dom.js";
 import {
   CACHE_KEY,
@@ -31,6 +37,10 @@ import { OLD_STAR_KEYS, STAR_KEY, countPageForStar, loadStarState } from "./star
 import { openTutorial } from "./tutorial.js";
 import { addPageBadge, blockGamePage } from "./dialog.js";
 import { addReportBanner } from "./report.js";
+import { NEWS_KEY, loadNews } from "./news.js";
+import { showWishlistOverview } from "./wishlist-overview.js";
+import { wasShownRecently } from "./shown.js";
+import { holdTrailers } from "./trailers.js";
 import { preloadCartRatings, watchCheckout } from "./cart.js";
 import {
   bundleIdOf,
@@ -43,12 +53,14 @@ import { dimRow } from "./wishlist.js";
 import { blurCard, unblurCard } from "./card.js";
 import {
   HOVER_KEY,
+  addInfoSign,
   arrangeOverlays,
   blurTile,
   hasCapsuleImage,
   hoverTileShapes,
   isHoverTile,
   isOverlayPlaced,
+  removeInfoSign,
   setHoverTileShapes,
   tileGroupOf,
   unblurTile,
@@ -158,12 +170,26 @@ const hasLostDimming = link =>
   );
 
 // Repairs a known tile after the page re-rendered parts of it.
+// A shown game keeps its sign while it counts as AI; a raised minimum level removes it.
+function updateInfoSign(link, entry, appId) {
+  if (link.dataset.unslopPlain) return;
+
+  if (entry?.ai && shouldBlur(entry, appId)) {
+    link._unslopInfo = entry;
+    addInfoSign(link);
+  } else {
+    removeInfoSign(link);
+  }
+}
+
 function restoreTile(link, appId) {
   const entry = cachedTileEntry(appId);
 
   if (link.classList.contains("unslop-wait") && entry) {
     return settleTile(link, entry.ai ? entry : null);
   }
+
+  if (link.dataset.unslopShown) return updateInfoSign(link, entry, appId);
 
   tileGroupOf(link).forEach(restoreClasses);
 
@@ -208,6 +234,7 @@ function scanLink(link, pageAppId) {
 
   if (revealedAppIds.has(appId)) {
     link.dataset.unslopShown = "1";
+    updateInfoSign(link, cachedTileEntry(appId), appId);
     return;
   }
 
@@ -243,6 +270,15 @@ function injectStyles() {
 /* Called by the wrappers at document_start: game images stay blurred until scan() has seen
    them, and a game page stays hidden until the gate has decided. The state lives in data
    attributes because Steam rewrites the class attribute of <html>. */
+// The settings are not loaded yet at document_start; the session copy tells whether blurring is off.
+function blurIsOff() {
+  try {
+    return JSON.parse(sessionStorage.getItem(SETTINGS_KEY) || "null")?.blur === false;
+  } catch {
+    return false;
+  }
+}
+
 function hold() {
   if (hold.done) return;
 
@@ -259,7 +295,9 @@ function hold() {
 
   hold.done = true;
   injectStyles();
-  root.dataset.unslopHold = "";
+
+  if (blurIsOff()) root.toggleAttribute("data-unslop-no-blur", true);
+  else root.dataset.unslopHold = "";
 
   if (currentAppId()) {
     root.dataset.unslopHoldPage = "";
@@ -330,14 +368,19 @@ async function handleGamePage(appId, hasSessionSettings) {
   saveCache();
 
   if (!info) return addReportBanner();
-  if (shouldBlur(info, appId)) blockGamePage(info, appId);
+
+  const isBlurredGame = shouldBlur(info, appId);
+  if (isBlurredGame && settings.pauseTrailers) holdTrailers();
+
+  // A game just shown on a tile opens without asking again.
+  if (isBlurredGame && settings.gatePages && !wasShownRecently(appId)) blockGamePage(info, appId);
   else addPageBadge(info);
 }
 
 async function loadPersistentState() {
-  const [storedCache, legacyCache, storedHoverShapes, storedStarState, storedSettings] =
+  const [storedCache, legacyCache, storedHoverShapes, storedStarState, storedSettings, storedNews] =
     await Promise.all(
-      [CACHE_KEY, LEGACY_CACHE_KEY, HOVER_KEY, STAR_KEY, SETTINGS_KEY].map(key =>
+      [CACHE_KEY, LEGACY_CACHE_KEY, HOVER_KEY, STAR_KEY, SETTINGS_KEY, NEWS_KEY].map(key =>
         storage.load(key),
       ),
     );
@@ -353,6 +396,7 @@ async function loadPersistentState() {
     storedHoverShapes.forEach(shape => hoverTileShapes.add(shape));
   }
   loadStarState(storedStarState);
+  loadNews(storedNews);
 
   if (legacyCache) flushPersistentCache();
   storage.remove([...OLD_KEYS, ...OLD_STAR_KEYS]);
@@ -388,6 +432,7 @@ export async function start(adapter) {
   await loadPersistentState();
   flushSessionCache();
   scan();
+  showWishlistOverview();
 
   addEventListener("pagehide", () => {
     flushSessionCache();
